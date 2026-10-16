@@ -1,0 +1,7 @@
+# 使用者參考用的賣場截圖，不上傳
+/image*.png
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

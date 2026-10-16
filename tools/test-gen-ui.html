@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<title>素材生成器介面測試</title>
+<style>body{margin:0;background:#888}iframe{border:0;display:block;background:#fff}#log{position:fixed;right:0;top:0;background:#000c;color:#fff;font:12px monospace;padding:6px;max-width:40%;white-space:pre-wrap}</style>
+<iframe id="f"></iframe>
+<pre id="log"></pre>
+<script>
+  // 用法：/tools/test-gen-ui.html?tab=character|background|icon|sound&w=1280&h=2400
+  // 會把程式產生的測試檔「拖」進對應面板，等處理完成，方便截圖檢查畫面。
+  const q = new URLSearchParams(location.search);
+  const tab = q.get('tab') || 'character';
+  const f = document.getElementById('f');
+  const log = (m) => { document.getElementById('log').textContent += m + '\n'; };
+  f.width = q.get('w') || 1280;
+  f.height = q.get('h') || 2400;
+  f.src = `/web/assets.html?tab=${tab}`;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function greenSheet(n = 3) {
+    const c = document.createElement('canvas');
+    c.width = 400 * n; c.height = 460;
+    const g = c.getContext('2d');
+    g.fillStyle = '#00FF00'; g.fillRect(0, 0, c.width, c.height);
+    for (let i = 0; i < n; i++) {
+      const cx = 200 + i * 400, bottom = 420 - (i % 2) * 18, ry = 150 - i * 12;
+      g.fillStyle = '#FFC93C';
+      g.beginPath(); g.ellipse(cx, bottom - ry, 100, ry, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#FFE08A';
+      g.beginPath(); g.ellipse(cx, bottom - ry * 0.8, 62, ry * 0.6, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#1E1F22';
+      g.beginPath(); g.arc(cx - 34, bottom - ry * 1.35, 9, 0, 7); g.arc(cx + 34, bottom - ry * 1.35, 9, 0, 7); g.fill();
+      g.fillStyle = '#FF8A00';
+      g.beginPath(); g.moveTo(cx - 12, bottom - ry * 1.15); g.lineTo(cx + 12, bottom - ry * 1.15); g.lineTo(cx, bottom - ry * 0.95); g.fill();
+    }
+    return c;
+  }
+  function heart() {
+    const c = document.createElement('canvas');
+    c.width = 600; c.height = 500;
+    const g = c.getContext('2d');
+    g.fillStyle = '#00FF00'; g.fillRect(0, 0, 600, 500);
+    g.fillStyle = '#FF6B8A';
+    g.beginPath(); g.moveTo(300, 420);
+    g.bezierCurveTo(80, 280, 140, 60, 300, 160);
+    g.bezierCurveTo(460, 60, 520, 280, 300, 420); g.fill();
+    return c;
+  }
+  function scene() {
+    const c = document.createElement('canvas');
+    c.width = 1600; c.height = 1000;
+    const g = c.getContext('2d');
+    const sky = g.createLinearGradient(0, 0, 0, 1000); sky.addColorStop(0, '#9AD8FF'); sky.addColorStop(1, '#E6F7FF');
+    g.fillStyle = sky; g.fillRect(0, 0, 1600, 1000);
+    g.fillStyle = '#8BD17C'; g.fillRect(0, 700, 1600, 300);
+    g.fillStyle = '#FFE08A'; g.beginPath(); g.arc(1300, 180, 80, 0, 7); g.fill();
+    g.fillStyle = '#C07A4A'; g.fillRect(740, 440, 120, 260);
+    g.fillStyle = '#4FA35B'; g.beginPath(); g.arc(800, 400, 150, 0, 7); g.fill();
+    return c;
+  }
+  function wav() {
+    const rate = 44100, n = rate * 1.5, data = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const t = i / rate;
+      data[i] = t < 0.4 ? 0 : 0.3 * Math.sin(2 * Math.PI * (440 + 300 * (t - 0.4)) * t) * Math.exp(-(t - 0.4) * 2);
+    }
+    const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const s = (o, str) => [...str].forEach((ch, k) => v.setUint8(o + k, ch.charCodeAt(0)));
+    s(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); s(8, 'WAVE'); s(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+    v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); s(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, data[i] * 32767, true);
+    return new File([buf], '測試音效.wav', { type: 'audio/wav' });
+  }
+  const toFile = (c, name) => new Promise((r) => c.toBlob((b) => r(new File([b], name, { type: 'image/png' }))));
+
+  (async () => {
+    // 不等 iframe 的 load（字型很慢時會拖很久），直接等拖放區出現
+    let drop = null, doc = null;
+    for (let i = 0; i < 200 && !drop; i++) {
+      await sleep(100);
+      doc = f.contentDocument;
+      if (doc && doc.location.pathname.endsWith('assets.html')) drop = [...doc.querySelectorAll('.gen-panel:not(.hidden) .drop')][0];
+    }
+    if (!drop) { log('找不到拖放區'); document.title = 'FAIL'; return; }
+    const file = tab === 'character' ? await toFile(greenSheet(), '測試角色.png')
+      : tab === 'icon' ? await toFile(heart(), '愛心.png')
+      : tab === 'background' ? await toFile(scene(), '場景.png')
+      : wav();
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    drop.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    log('已放入：' + file.name);
+    await sleep(2500);
+    if (tab === 'character') {
+      // 暫停在第 2 格、開洋蔥皮，方便看對齊
+      const items = doc.querySelectorAll('.frame-item');
+      log('格數：' + items.length);
+      items[1]?.click();
+    }
+    await sleep(500);
+    if (q.get('save')) {
+      // 用瀏覽器內建的私有檔案系統（OPFS）當素材資料夾，實際跑一次存檔再讀回來檢查
+      const w = f.contentWindow;
+      const fm = await w.eval("import('/web/js/gen/folder.js')");
+      const ms = await w.eval("import('/web/js/lib/master.js')");
+      const opfs = await w.navigator.storage.getDirectory();
+      for await (const [name] of opfs.entries()) await opfs.removeEntry(name, { recursive: true });
+      fm.folder.root = opfs; fm.folder.saved = opfs;
+      await fm.refresh();
+      const btn = doc.querySelector('.gen-panel:not(.hidden) .btn-primary.btn-lg');
+      btn.click();
+      await sleep(3000);
+      const m = await ms.readMaster(opfs);
+      const out = {
+        anims: m.anims.map((a) => ({ id: a.id, frames: a.frames.length, fps: a.fps, names: a.frames.map((x) => x.name) })),
+        backgrounds: m.backgrounds.map((b) => b.path), icons: m.icons.map((b) => b.path), sounds: m.sounds.map((b) => b.path),
+        pet: m.pet.raw, missing: m.missing,
+      };
+      if (m.anims[0]) {
+        const bmp = await createImageBitmap(m.anims[0].frames[0]);
+        out.firstFrameSize = [bmp.width, bmp.height];
+      }
+      if (m.backgrounds[0]) { const bmp = await createImageBitmap(m.backgrounds[0].file); out.bgSize = [bmp.width, bmp.height]; }
+      if (m.icons[0]) { const bmp = await createImageBitmap(m.icons[0].file); out.iconSize = [bmp.width, bmp.height]; }
+      if (m.sounds[0]) { const buf = await m.sounds[0].file.arrayBuffer(); const v = new DataView(buf); out.wav = { rate: v.getUint32(24, true), ch: v.getUint16(22, true), bits: v.getUint16(34, true), bytes: buf.byteLength }; }
+      log('SAVE ' + JSON.stringify(out));
+    }
+    log('完成');
+    document.title = 'DONE';
+  })();
+</script>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>接線教學</title>
+  <meta name="description" content="一步一張圖，把電子雞的螢幕、馬達、喇叭、感壓片、加速度計與電池焊起來。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/wiring.css">
+</head>
+<body>
+  <main class="wrap">
+    <div class="page-head">
+      <h1>① 接線教學</h1>
+      <p>一步一張圖，照著焊。每一步做完按「下一步」，進度會自動記住。</p>
+    </div>
+    <div class="steps-head">
+      <span class="step-count" id="step-count"></span>
+      <div class="step-progress"><i id="step-bar"></i></div>
+      <button class="btn btn-ghost small" id="reset">重新開始</button>
+    </div>
+    <section id="stage" aria-live="polite"></section>
+    <nav class="step-list" id="step-list" aria-label="所有步驟"></nav>
+  </main>
+  <script type="module" src="js/wiring/main.js"></script>
+</body>
+</html>

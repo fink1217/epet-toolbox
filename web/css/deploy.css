@@ -1,0 +1,89 @@
+/* 「寫入裝置」頁專用樣式；token 全部來自 base.css */
+
+/* base.css 的 .wrap（class）權重比 main（元素）高，會把 main 的上下留白蓋掉，這裡補回來 */
+
+.deploy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+@media (max-width: 980px) { .deploy-grid { grid-template-columns: 1fr; } }
+
+.task { display: grid; gap: 14px; padding: 0; overflow: hidden; }
+.task-head { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 12px; align-items: center; padding: 22px 22px 0; }
+.task-head .tag {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--ink); color: #fff; font-family: var(--font-display); font-size: 18px; margin-bottom: 6px;
+}
+.task-head h2 { margin: 0; }
+.task-head p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+.task-art svg { width: 100%; height: auto; }
+.task-body { display: grid; gap: 14px; padding: 4px 22px 4px; }
+.task-body > .why { margin-top: 0; }
+.task-why { padding: 0 22px 22px; }
+@media (max-width: 520px) {
+  .task-head { grid-template-columns: 1fr; }
+  .task-art { max-width: 220px; }
+}
+
+/* 步驟點點：連接 → 燒錄 → 完成 */
+.task-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; counter-reset: s; flex-wrap: wrap; }
+.task-steps li {
+  counter-increment: s; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted);
+  padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line);
+}
+.task-steps li::before {
+  content: counter(s); width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center;
+  background: var(--line); color: var(--ink-2); font-size: 12px;
+}
+.task-steps li.now { color: var(--ink); border-color: var(--yolk-2); background: var(--yolk-soft); }
+.task-steps li.now::before { background: var(--yolk); color: #2A1A00; }
+.task-steps li.done { color: var(--green); }
+.task-steps li.done::before { content: '✓'; background: var(--green-soft); color: var(--green); }
+
+.wide { width: 100%; }
+
+/* 孵蛋 */
+.hatch { display: grid; place-items: center; }
+.hatch svg { width: min(160px, 50%); height: auto; }
+.egg-wobble { animation: wobble 1.1s ease-in-out infinite; }
+@keyframes wobble {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+@media (prefers-reduced-motion: reduce) { .egg-wobble { animation: none; } }
+
+/* 檢查清單 */
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.checklist li { display: grid; grid-template-columns: 22px auto minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 15px; }
+.checklist li:last-child { border-bottom: 0; }
+.checklist .mark { font-weight: 700; color: var(--muted); }
+.checklist li.ok .mark { color: var(--green); }
+.checklist .muted { font-size: 13.5px; overflow-wrap: anywhere; }
+
+/* 螢幕尺寸勾選 */
+h4.sub { font-size: 16px; margin: 4px 0 0; }
+.sizes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.size {
+  display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--paper); cursor: pointer;
+}
+.size input { grid-row: span 2; accent-color: var(--yolk); width: 18px; height: 18px; }
+.size:has(input:checked) { border-color: var(--yolk); background: var(--yolk-soft); }
+@media (max-width: 420px) { .sizes { grid-template-columns: 1fr; } }
+
+/* 完成數字 */
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stats > div { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; }
+.stats b { font-family: var(--font-display); font-size: 26px; font-weight: 400; line-height: 1.2; }
+.stats span { font-size: 13px; color: var(--muted); }
+
+/* 進階、紀錄、錯誤建議 */
+details.advanced { border: 1px dashed var(--line-2); border-radius: 12px; padding: 8px 12px; background: var(--paper); }
+details.advanced summary { cursor: pointer; font-size: 14px; color: var(--ink-2); }
+details.advanced[open] summary { margin-bottom: 8px; }
+pre.log {
+  margin: 0; max-height: 220px; overflow: auto; font: 12px/1.5 var(--font-mono); background: var(--ink); color: #D7F5D0;
+  padding: 10px 12px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+ul.tips { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 15px; }
+input[type="file"] { font: 14px var(--font-body); max-width: 100%; }
+
+.current { margin-top: 10px; }

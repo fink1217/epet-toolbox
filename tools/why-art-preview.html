@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>繪本插圖總覽</title>
+<link rel="stylesheet" href="/web/css/base.css">
+<style>body{padding:20px}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.g div{background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px}.g b{font:12px monospace}</style>
+<div class="g" id="g"></div>
+<script type="module">
+  // 用法：/tools/why-art-preview.html?only=moduleInside,moduleVsBare
+  import * as A from '/web/js/svg/why-art.js';
+  const only = new URLSearchParams(location.search).get('only');
+  const names = only ? only.split(',') : Object.keys(A);
+  const g = document.getElementById('g');
+  for (const n of names) {
+    const d = document.createElement('div');
+    d.innerHTML = '<b>' + n + '</b>' + A[n]();
+    g.append(d);
+  }
+</script>

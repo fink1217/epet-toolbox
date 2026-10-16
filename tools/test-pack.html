@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>打包器端到端測試</title>
+<link rel="stylesheet" href="/web/css/base.css">
+</head>
+<body>
+<!--
+  打包器端到端測試：用程式產生的假素材（記憶體裡的資料夾），跑完整流程：
+  readMaster → buildPack → writePack（寫進假 SD 卡）→ zipPack。
+  結果寫進 #result（JSON），給 node tools/test-pack.mjs --e2e 驗證。
+  執行：從專案根目錄的伺服器開 /tools/test-pack.html，用 headless Chrome --dump-dom 取結果。
+-->
+<pre id="result">running</pre>
+<script type="module">
+import { MemDir, put, walk } from '/web/js/deploy/memfs.js';
+import { readMaster } from '/web/js/lib/master.js';
+import { buildPack, writePack, zipPack } from '/web/js/deploy/pack.js';
+import { decodeQOI } from '/web/js/deploy/qoi.js';
+import { loadEsptool } from '/web/js/deploy/flash.js';
+import { encodeWav } from '/web/js/lib/wav.js';
+import { layoutFor, MASTER } from '/web/js/data/vocab.js';
+
+const checks = [];
+const check = (name, ok, detail = '') => checks.push({ name, ok: !!ok, detail: ok ? '' : String(detail) });
+const out = { checks, fonts: {}, timing: {} };
+
+function canvasFile(w, h, draw, name) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  return new Promise((res) => c.toBlob((b) => res(new File([b], name, { type: 'image/png' })), 'image/png'));
+}
+
+// 角色幀：身體是橢圓，最底部剛好踩在 y=984、水平置中在 x=512
+const chick = (squash) => (g) => {
+  const ry = 280 * squash;
+  g.fillStyle = '#FFC93C';
+  g.beginPath(); g.ellipse(512, 984 - ry, 220, ry, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#1E1F22';
+  g.beginPath(); g.arc(470, 984 - ry * 1.3, 18, 0, Math.PI * 2); g.arc(554, 984 - ry * 1.3, 18, 0, Math.PI * 2); g.fill();
+};
+
+function sine(seconds, rate, freq) {
+  const n = Math.round(seconds * rate);
+  return Float32Array.from({ length: n }, (_, i) => 0.6 * Math.sin((2 * Math.PI * freq * i) / rate));
+}
+
+function jpegInfo(bytes) {
+  let sof0 = false, sof2 = false;
+  for (let i = 0; i < bytes.length - 1; i++) {
+    if (bytes[i] !== 0xff) continue;
+    if (bytes[i + 1] === 0xc0) sof0 = true;
+    if (bytes[i + 1] === 0xc2) sof2 = true;
+  }
+  return { sof0, sof2, soi: bytes[0] === 0xff && bytes[1] === 0xd8 };
+}
+
+function b64(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+// 解碼後找不透明範圍
+function opaqueBox(img) {
+  let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.data[(y * img.width + x) * 4 + 3] > 128) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  }
+  return { x0, x1, y0, y1 };
+}
+
+try {
+  // ── 假素材資料夾 ──
+  const root = new MemDir('我的電子雞');
+  const C = MASTER.character;
+  await put(root, '角色/待機/001.png', await canvasFile(C.w, C.h, chick(1), '001.png'));
+  await put(root, '角色/待機/002.png', await canvasFile(C.w, C.h, chick(0.85), '002.png'));
+  await put(root, '角色/吃東西/001.png', await canvasFile(C.w, C.h, chick(0.9), '001.png'));
+  await put(root, '角色/吃東西/002.png', await canvasFile(C.w, C.h, () => {}, '002.png'));   // 整張透明
+  await put(root, '角色/跳舞/001.png', await canvasFile(64, 64, (g) => g.fillRect(0, 0, 9, 9), '001.png'));   // 不認得的動作
+  await put(root, '背景/白天.png', await canvasFile(1080, 1920, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#BFE7FF'); gr.addColorStop(1, '#A8E6A1');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }, '白天.png'));
+  await put(root, '背景/晚上.png', await canvasFile(1920, 1080, (g, w, h) => { g.fillStyle = '#123'; g.fillRect(0, 0, w, h); }, '晚上.png'));
+  await put(root, '圖示/餵食.png', await canvasFile(512, 512, (g) => { g.fillStyle = '#F76B15'; g.fillRect(100, 150, 300, 200); }, '餵食.png'));
+  await put(root, '道具/食物.png', await canvasFile(512, 512, (g) => { g.fillStyle = '#E5484D'; g.beginPath(); g.arc(256, 256, 200, 0, 7); g.fill(); }, '食物.png'));
+  await put(root, '音效/吃東西.wav', new File([encodeWav(sine(0.5, 44100, 440), 44100)], '吃東西.wav'));
+  await put(root, '寵物.json', new File([JSON.stringify({ name: '小黃', anims: { 待機: { fps: 5 } }, texts: { lines: { hungry: ['餓扁了'] } } })], '寵物.json'));
+
+  // ── 讀素材 ──
+  const master = await readMaster(root);
+  check('必要項目齊全', master.missing.length === 0, master.missing.join());
+  check('不認得的動作有提醒', master.warnings.some((w) => w.includes('跳舞')), JSON.stringify(master.warnings));
+  check('寵物.json 的幀率覆寫', master.anims.find((a) => a.id === 'idle')?.fps === 5);
+  check('動作數量（待機、吃東西）', master.anims.length === 2, master.anims.map((a) => a.id).join());
+
+  // ── 打包兩種尺寸 ──
+  const screens = [{ w: 172, h: 320 }, { w: 240, h: 320 }];
+  const t0 = performance.now();
+  let lastP = 0;
+  const { files, report } = await buildPack(master, screens, (p) => { lastP = p; });
+  out.timing.buildPackMs = Math.round(performance.now() - t0);
+  check('進度回報到 100%', Math.abs(lastP - 1) < 1e-9, lastP);
+  out.report = report;
+  out.paths = [...files.keys()];
+
+  for (const s of screens) {
+    const dir = `${s.w}x${s.h}`;
+    const L = layoutFor(s.w, s.h);
+    const m = JSON.parse(new TextDecoder().decode(files.get(`${dir}/manifest.json`)));
+    check(`${dir} manifest format/screen`, m.format === 1 && m.screen.w === s.w && m.screen.h === s.h);
+    check(`${dir} anchor = 版面規則`, m.anchor.x === L.anchor.x && m.anchor.y === L.anchor.y, JSON.stringify(m.anchor));
+    check(`${dir} 待機 2 幀、fps 5`, m.anims.idle.frames.length === 2 && m.anims.idle.fps === 5);
+    check(`${dir} 字型大小`, m.font.px === L.fontPx && files.has(`${dir}/font.bin`));
+    check(`${dir} 音效路徑指向共用資料夾`, m.sounds.eat === '../sfx/eat.wav');
+    check(`${dir} 不認得的動作沒被打包`, !Object.keys(m.anims).some((k) => !['idle', 'eat'].includes(k)));
+
+    // 每一幀：腳底要剛好落在 anchor
+    for (const id of ['idle', 'eat']) {
+      m.anims[id].frames.forEach((f, i) => {
+        const bytes = files.get(`${dir}/${f.file}`);
+        check(`${dir} ${f.file} 檔案存在`, !!bytes);
+        const img = decodeQOI(bytes);
+        if (id === 'eat' && i === 1) {
+          check(`${dir} 全透明幀 → 1×1、dx=dy=0`, img.width === 1 && img.height === 1 && f.dx === 0 && f.dy === 0, `${img.width}×${img.height} ${f.dx},${f.dy}`);
+          return;
+        }
+        const b = opaqueBox(img);
+        const footY = m.anchor.y + f.dy + b.y1 + 1;           // 最底下不透明列的下緣
+        const midX = m.anchor.x + f.dx + (b.x0 + b.x1 + 1) / 2;
+        check(`${dir} ${f.file} 腳底落在 anchor（差 ${footY - m.anchor.y}px）`, Math.abs(footY - m.anchor.y) <= 1, `footY=${footY} anchorY=${m.anchor.y}`);
+        check(`${dir} ${f.file} 水平置中（差 ${(midX - m.anchor.x).toFixed(1)}px）`, Math.abs(midX - m.anchor.x) <= 1, `midX=${midX} anchorX=${m.anchor.x}`);
+        check(`${dir} ${f.file} 縮放後不超過 petBox`, img.width <= L.petBox && img.height <= L.petBox, `${img.width}×${img.height} > ${L.petBox}`);
+      });
+    }
+
+    // 背景 JPEG：尺寸剛好、baseline
+    for (const id of ['day', 'night']) {
+      const bytes = files.get(`${dir}/bg/${id}.jpg`);
+      const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/jpeg' }));
+      const j = jpegInfo(bytes);
+      check(`${dir} 背景 ${id} 尺寸 ${bmp.width}×${bmp.height}`, bmp.width === s.w && bmp.height === s.h);
+      check(`${dir} 背景 ${id} 是 baseline JPEG`, j.soi && j.sof0 && !j.sof2, JSON.stringify(j));
+    }
+
+    // 圖示、道具：裁掉透明邊、不超過格子
+    const icon = decodeQOI(files.get(`${dir}/icon/feed.qoi`));
+    const scale = L.icon / 512;
+    check(`${dir} 圖示裁邊後 ${icon.width}×${icon.height}（約 ${Math.round(300 * scale)}×${Math.round(200 * scale)}）`,
+      // 縮圖的抗鋸齒會讓四邊各多出約 1px 半透明像素（裁邊保留柔邊），所以容許 ±3
+      Math.abs(icon.width - 300 * scale) <= 3 && Math.abs(icon.height - 200 * scale) <= 3);
+    const item = decodeQOI(files.get(`${dir}/item/food.qoi`));
+    check(`${dir} 道具不超過 ${L.item}px`, item.width <= L.item && item.height <= L.item, `${item.width}×${item.height}`);
+
+    out.fonts[`${dir}/font.bin`] = b64(files.get(`${dir}/font.bin`));
+  }
+  check('兩種尺寸字型不同大小', layoutFor(172, 320).fontPx !== layoutFor(240, 320).fontPx);
+
+  // 音效：22050 Hz、單聲道、16-bit、長度不變
+  const wav = files.get('sfx/eat.wav');
+  const dv = new DataView(wav.buffer, wav.byteOffset);
+  const rate = dv.getUint32(24, true), ch = dv.getUint16(22, true), bits = dv.getUint16(34, true), n = dv.getUint32(40, true) / 2;
+  check(`音效 ${rate}Hz ${ch}ch ${bits}bit ${n} 樣本`, rate === 22050 && ch === 1 && bits === 16 && Math.abs(n - 11025) <= 2);
+
+  // 文字
+  const text = JSON.parse(new TextDecoder().decode(files.get('text.json')));
+  check('text.json 合併了自訂與預設', text.format === 1 && text.name === '小黃' && text.lines.hungry[0] === '餓扁了' && text.menu.feed === '餵食');
+
+  // 檔名全部英文
+  check('SD 卡上沒有中文檔名', [...files.keys()].every((p) => /^[a-z0-9_./x-]+$/.test(p)), [...files.keys()].filter((p) => !/^[a-z0-9_./x-]+$/.test(p)).join());
+
+  // ── 寫進假 SD 卡：舊的同尺寸資料夾要清掉，其他尺寸要保留 ──
+  const sd = new MemDir('SDCARD');
+  await put(sd, 'pet/172x320/anim/old/000.qoi', new File(['x'], '000.qoi'));
+  await put(sd, 'pet/320x480/keep.txt', new File(['keep'], 'keep.txt'));
+  await put(sd, 'DCIM/photo.jpg', new File(['p'], 'photo.jpg'));
+  await writePack(sd, files, screens);
+  const written = (await walk(sd)).map(([p]) => p);
+  check('寫入檔案數', written.filter((p) => p.startsWith('pet/') && !p.startsWith('pet/320x480')).length === files.size, `${written.length} vs ${files.size}`);
+  check('舊的 172x320 殘檔被清掉', !written.includes('pet/172x320/anim/old/000.qoi'));
+  check('沒打包的 320x480 保留', written.includes('pet/320x480/keep.txt'));
+  check('pet 以外的東西不動', written.includes('DCIM/photo.jpg'));
+  const back = await (await (await (await sd.getDirectoryHandle('pet')).getDirectoryHandle('172x320')).getFileHandle('manifest.json')).getFile();
+  check('寫回的 manifest 內容一致', (await back.text()) === new TextDecoder().decode(files.get('172x320/manifest.json')));
+
+  // 直接選到 pet 資料夾時，寫在它裡面（不要變成 pet/pet）
+  const petOnly = new MemDir('pet');
+  await writePack(petOnly, files, screens);
+  const w2 = (await walk(petOnly)).map(([p]) => p);
+  check('選到 pet 資料夾時直接寫在裡面', w2.includes('172x320/manifest.json') && !w2.some((p) => p.startsWith('pet/')));
+
+  // ── ZIP 備案 ──
+  const zip = await zipPack(files);
+  check(`ZIP 產生（${zip.size} bytes）`, zip.size > report.totalBytes);
+
+  // ── esptool-js 能從 CDN 載入 ──
+  const esp = await loadEsptool();
+  check('esptool-js 0.7.0 載入（ESPLoader、Transport）', typeof esp.ESPLoader === 'function' && typeof esp.Transport === 'function');
+} catch (e) {
+  out.error = `${e.name}: ${e.message}\n${e.stack}`;
+}
+document.getElementById('result').textContent = JSON.stringify(out);
+document.title = 'done';
+</script>
+</body>
+</html>

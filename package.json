@@ -1,0 +1,9 @@
+{
+  "name": "epet-toolbox",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tools/check-hub.mjs",
+    "test": "node tools/check-hub.mjs && node tools/test-master.mjs && node tools/test-pack.mjs"
+  }
+}

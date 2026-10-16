@@ -1,0 +1,137 @@
+/* ② 素材生成器專用樣式（共用 token 與元件在 base.css） */
+
+/* base.css 的 .wrap 會把 main 的上下 padding 蓋掉，這裡補回來 */
+
+.gen-head { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+.gen-head .say { max-width: 340px; }
+
+/* 素材資料夾與清單 */
+.folder-card { display: grid; gap: 16px; margin-bottom: 26px; }
+.folder-name { font-family: var(--font-display); font-size: 20px; }
+.folder-card .row > .grow { min-width: min(100%, 260px); }
+.checklist { display: grid; gap: 10px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.ck-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ck-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 10px; align-items: start; }
+.ck-title { font-size: 14px; color: var(--ink-2); padding-top: 3px; }
+.ck-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ck-chip { cursor: pointer; font-family: var(--font-body); }
+.ck-chip:hover { border-color: var(--yolk); }
+.ck-warn summary { cursor: pointer; color: var(--red); }
+.ck-warn ul { margin: 6px 0 0; padding-left: 20px; color: var(--ink-2); }
+
+/* 分頁列：手機可以左右滑 */
+.gen-tabbar { position: sticky; top: 62px; z-index: 5; padding: 8px 0; background: color-mix(in srgb, var(--bg) 92%, transparent); overflow-x: auto; scrollbar-width: none; }
+.gen-tabs { white-space: nowrap; }
+.gen-tabs button { flex: none; }
+.gen-panels { margin-top: 10px; }
+@media (max-width: 760px) { .gen-tabbar { top: 0; position: static; } }
+
+/* 步驟卡 */
+.gen-step { display: grid; gap: 14px; }
+.gen-step-head { display: flex; align-items: center; gap: 10px; }
+.gen-step-head h3 { margin: 0; }
+.gen-n {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--yolk); color: #2A1A00;
+  font: 400 17px/30px var(--font-display); text-align: center; flex: none;
+}
+.gen-two { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .gen-two { grid-template-columns: 1fr; } }
+
+/* 去背預覽 */
+.stage {
+  position: relative; text-align: center; background: var(--paper); border: 1px solid var(--line);
+  border-radius: 14px; padding: 10px; min-height: 140px;
+}
+.stage-inner { position: relative; display: inline-block; max-width: 100%; vertical-align: top; line-height: 0; border-radius: 6px; overflow: hidden; }
+.stage-canvas { display: block; max-width: 100%; max-height: 460px; width: auto; height: auto; cursor: pointer; }
+.stage-inner.wand .stage-canvas { cursor: crosshair; }
+.stage-boxes { position: absolute; inset: 0; pointer-events: none; }
+.fbox { position: absolute; border: 2px dashed var(--teal); border-radius: 4px; }
+.fbox span {
+  position: absolute; left: -2px; top: -2px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 4px 0 6px 0;
+  background: var(--teal); color: #fff; font: 500 12px/22px var(--font-body); text-align: center;
+}
+.fbox.off { border-color: var(--muted); background: rgba(250, 246, 238, .72); }
+.fbox.off span { background: var(--muted); }
+.fbox.off::after { content: '不要'; position: absolute; inset: 0; display: grid; place-items: center; font: 500 14px var(--font-body); color: var(--ink-2); line-height: 1; }
+.stage-info { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line-2); vertical-align: -1px; }
+.warn-text { color: var(--red); font-weight: 500; }
+
+/* 處理中遮罩 */
+.busy {
+  position: absolute; inset: 0; display: flex; gap: 10px; align-items: center; justify-content: center;
+  background: rgba(255, 253, 248, .78); border-radius: inherit; font-size: 15px; color: var(--ink-2); z-index: 2;
+}
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--yolk); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 來源縮圖列 */
+.src-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+.src-strip:empty { display: none; }
+.src-item { position: relative; display: grid; justify-items: center; gap: 2px; }
+.src-pick { border: 2px solid var(--line); border-radius: 10px; padding: 0; cursor: pointer; overflow: hidden; line-height: 0; }
+.src-item.on .src-pick { border-color: var(--yolk); box-shadow: 0 0 0 3px var(--yolk-soft); }
+.src-x {
+  position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line-2);
+  background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1; color: var(--ink-2);
+}
+
+/* 動畫預覽 */
+.anim-stage { width: min(100%, 380px); margin: 0 auto; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); line-height: 0; }
+.anim-canvas { width: 100%; height: auto; cursor: pointer; }
+.anim-canvas:focus-visible { outline: 3px solid var(--yolk); outline-offset: -3px; }
+.frame-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 4px; }
+.frame-item { position: relative; flex: none; padding: 0; border: 2px solid var(--line); border-radius: 8px; cursor: pointer; line-height: 0; }
+.frame-item.on { border-color: var(--yolk); box-shadow: 0 0 0 3px var(--yolk-soft); }
+.frame-item span { position: absolute; left: 3px; bottom: 3px; font: 500 11px/1 var(--font-body); color: var(--ink-2); background: rgba(255,255,255,.85); border-radius: 4px; padding: 2px 4px; }
+.nudge { display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; }
+.nudge .btn { padding: 0; height: 44px; }
+
+/* 滑桿與開關 */
+.slider { display: grid; gap: 4px; }
+.slider-label { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); }
+.slider-val { font-variant-numeric: tabular-nums; color: var(--ink); }
+.slider input { width: 100%; }
+.switch { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-ui { flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--line-2); position: relative; transition: background .15s; }
+.switch-ui::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+.switch input:checked + .switch-ui { background: var(--teal); }
+.switch input:checked + .switch-ui::after { transform: translateX(16px); }
+.switch input:focus-visible + .switch-ui { outline: 3px solid var(--yolk); outline-offset: 2px; }
+.btn[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* 提示詞小抄 */
+.prompt-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; }
+.prompt-card summary { cursor: pointer; font-family: var(--font-display); font-size: 17px; }
+.prompt-card[open] summary { margin-bottom: 12px; }
+.prompt-card select { max-width: 12em; }
+.prompt-text {
+  background: var(--paper); border: 1px dashed var(--line-2); border-radius: 12px; padding: 12px 14px;
+  font-size: 14.5px; line-height: 1.7; white-space: pre-wrap; user-select: all;
+}
+
+/* 背景 */
+.bg-view-wrap { position: relative; text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 10px; line-height: 0; }
+.bg-view { max-width: 100%; max-height: 520px; width: auto; height: auto; cursor: grab; touch-action: none; border-radius: 6px; display: inline-block; }
+.bg-view:active { cursor: grabbing; }
+.screen-previews { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.screen-prev { margin: 0; display: grid; gap: 4px; justify-items: center; }
+.screen-prev canvas { border-radius: 8px; border: 1px solid var(--line-2); background: var(--paper); }
+.screen-prev figcaption { font-size: 12px; color: var(--ink-2); display: flex; gap: 4px; align-items: center; }
+.screen-prev .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* 圖示／道具輸出 */
+.sticker-wrap { width: min(100%, 260px); margin: 0 auto; border-radius: 14px; border: 1px solid var(--line); overflow: hidden; line-height: 0; }
+.sticker-out { width: 100%; height: auto; }
+
+/* 音效波形 */
+.wave { width: 100%; height: 110px; border-radius: 12px; border: 1px solid var(--line); }
+
+/* 名字與文字 */
+.text-group { border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px 16px; margin: 0; }
+.text-group legend { padding: 0 6px; font-family: var(--font-display); font-size: 16px; }
+.text-group textarea { resize: vertical; min-height: 56px; }
+.field.narrow { max-width: 320px; }
+.field input, .field textarea { width: 100%; }

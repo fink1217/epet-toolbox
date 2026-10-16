@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<title>素材生成器演算法測試</title>
+<style>body{font:14px/1.5 system-ui;margin:16px}canvas{max-width:100%;border:1px solid #ccc;background:#eee}pre{white-space:pre-wrap}</style>
+<h1>素材生成器演算法測試</h1>
+<p>用程式畫一張「亮綠底＋三個大小不同的角色（含手臂圍住的綠色空隙、旁邊的小星星碎片）」，跑去背、切幀、正規化並檢查結果。</p>
+<pre id="result">執行中…</pre>
+<div id="view"></div>
+<script type="module">
+  // 用法：開 http://127.0.0.1:8766/tools/test-gen.html
+  // 自動化：chrome --headless=new --virtual-time-budget=8000 --dump-dom <網址>，看 #result 的 JSON
+  import { removeBackground } from '../web/js/gen/bgremove.js';
+  import { splitImage } from '../web/js/gen/split.js';
+  import { sharedScale, renderMaster, BASELINE, CANVAS, MAX_H } from '../web/js/gen/normalize.js';
+
+  const W = 1400, H = 560;
+  const checks = [];
+  const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail });
+
+  // ── 1. 畫測試圖 ──
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.fillStyle = '#00FF00';
+  g.fillRect(0, 0, W, H);
+  // 背景加一點雜訊（模擬 AI 圖或 JPEG 的不均勻）
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const img0 = g.getImageData(0, 0, W, H);
+  for (let i = 0; i < img0.data.length; i += 4) {
+    img0.data[i] = Math.round(rnd() * 8);
+    img0.data[i + 1] = 255 - Math.round(rnd() * 10);
+    img0.data[i + 2] = Math.round(rnd() * 8);
+  }
+  g.putImageData(img0, 0, 0);
+
+  const YELLOW = '#FFC93C';
+  function chick(cx, bottom, rx, ry) {
+    g.fillStyle = YELLOW;
+    g.beginPath(); g.ellipse(cx, bottom - ry, rx, ry, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1E1F22';
+    g.beginPath(); g.arc(cx - rx * 0.35, bottom - ry * 1.3, rx * 0.1, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx + rx * 0.35, bottom - ry * 1.3, rx * 0.1, 0, Math.PI * 2); g.fill();
+  }
+  // A：最高，右邊有一圈手臂圍出綠色空隙
+  g.strokeStyle = YELLOW; g.lineWidth = 22;
+  g.beginPath(); g.arc(330, 330, 45, 0, Math.PI * 2); g.stroke();
+  chick(220, 500, 90, 150);
+  // B：中等，右邊有一顆分開的小星星
+  chick(650, 500, 70, 140);
+  g.fillStyle = '#FFE08A';
+  g.beginPath();
+  for (let k = 0; k < 10; k++) {
+    const r = k % 2 ? 6 : 14, a = (k / 10) * Math.PI * 2 - Math.PI / 2;
+    g[k ? 'lineTo' : 'moveTo'](765 + r * Math.cos(a), 300 + r * Math.sin(a));
+  }
+  g.closePath(); g.fill();
+  // C：最矮
+  chick(1100, 500, 60, 100);
+
+  const src = g.getImageData(0, 0, W, H);
+  const px = (data, x, y) => { const i = (y * W + x) * 4; return [data[i], data[i + 1], data[i + 2], data[i + 3]]; };
+
+  // ── 2. 去背（一般模式）──
+  const t0 = performance.now();
+  const res = removeBackground(src.data, W, H, { tolerance: 30 });
+  const ms = Math.round(performance.now() - t0);
+  check('偵測到的背景色接近亮綠', res.bg && res.bg[1] > 240 && res.bg[0] < 12 && res.bg[2] < 12, res.bg && res.bg.map(Math.round));
+  check('角落變透明', px(res.data, 5, 5)[3] === 0, px(res.data, 5, 5));
+  check('角色之間的背景變透明', px(res.data, 450, 300)[3] === 0, px(res.data, 450, 300));
+  const inside = px(res.data, 220, 380);
+  check('角色內部保留且顏色不變', inside[3] === 255 && Math.abs(inside[0] - 255) < 3 && Math.abs(inside[1] - 201) < 3 && Math.abs(inside[2] - 60) < 3, inside);
+  check('被手臂圍住的綠色空隙：一般模式不會去掉', px(res.data, 345, 330)[3] === 255, px(res.data, 345, 330));
+  // 邊緣不能殘留綠邊：去色溢後，半透明像素的綠色不應該明顯高於紅色
+  let fringe = 0, edge = 0;
+  for (let i = 0; i < res.data.length; i += 4) {
+    const a = res.data[i + 3];
+    if (a > 0 && a < 255) { edge++; if (res.data[i + 1] > res.data[i] + 60) fringe++; }
+  }
+  check('邊緣沒有綠邊（去色溢）', edge > 0 && fringe / edge < 0.05, { 半透明像素: edge, 偏綠: fringe });
+
+  // ── 3. 全部同色模式 ──
+  const resG = removeBackground(src.data, W, H, { tolerance: 30, global: true });
+  check('全部同色模式：圍住的空隙也去掉', px(resG.data, 345, 330)[3] === 0, px(resG.data, 345, 330));
+  check('全部同色模式：角色內部仍保留', px(resG.data, 220, 380)[3] === 255);
+
+  // ── 4. 魔術棒：在一般模式的結果上點空隙 ──
+  const resW = removeBackground(src.data, W, H, { tolerance: 30, wand: [{ x: 345, y: 330 }] });
+  check('魔術棒點空隙會去掉', px(resW.data, 345, 330)[3] === 0, px(resW.data, 345, 330));
+  check('魔術棒不影響角色', px(resW.data, 220, 380)[3] === 255);
+
+  // ── 5. 切幀 ──
+  const frames = splitImage(res.data, W, H);
+  check('切成 3 幀', frames.length === 3, frames.length);
+  const xs = frames.map((f) => f.src.x0);
+  check('閱讀順序（由左到右）', xs[0] < xs[1] && xs[1] < xs[2], xs);
+  const fb = frames[1];
+  check('小星星併入最近的角色（B）', fb && fb.src.x1 >= 770, fb && fb.src);
+  check('B 沒有吃到 C', fb && fb.src.x1 < 1000, fb && fb.src);
+  const single = splitImage(res.data, W, H, { single: true });
+  check('「這張就是一幀」只有 1 幀', single.length === 1, single.length);
+
+  // ── 6. 正規化 ──
+  const toCanvas = (f) => { const c = document.createElement('canvas'); c.width = f.w; c.height = f.h; c.getContext('2d').putImageData(new ImageData(f.rgba, f.w, f.h), 0, 0); return c; };
+  const scale = sharedScale(frames);
+  const measured = frames.map((f) => {
+    const m = renderMaster(toCanvas(f), f, scale, { dx: 0, dy: 0 });
+    const d = m.getContext('2d').getImageData(0, 0, CANVAS, CANVAS).data;
+    let top = CANVAS, bottom = -1, left = CANVAS, right = -1;
+    for (let y = 0; y < CANVAS; y++) for (let x = 0; x < CANVAS; x++) {
+      if (d[(y * CANVAS + x) * 4 + 3] > 128) {
+        if (y < top) top = y; if (y > bottom) bottom = y;
+        if (x < left) left = x; if (x > right) right = x;
+      }
+    }
+    return { w: m.width, h: m.height, top, bottom, height: bottom - top + 1, cx: (left + right) / 2, srcH: f.core.h };
+  });
+  check('輸出是 1024×1024', measured.every((m) => m.w === 1024 && m.h === 1024));
+  check('腳底都在基線（y = 983 ±1）', measured.every((m) => Math.abs(m.bottom - (BASELINE - 1)) <= 1), measured.map((m) => m.bottom));
+  check('最高的那幀約 900 px', Math.abs(measured[0].height - MAX_H) <= 3, measured[0].height);
+  const ratios = measured.map((m) => m.height / m.srcH);
+  check('三幀同一個縮放比例', Math.max(...ratios) - Math.min(...ratios) < 0.03, ratios.map((r) => r.toFixed(3)));
+  check('水平置中（512 ±2）', measured.every((m) => Math.abs(m.cx - 512) <= 2), measured.map((m) => m.cx));
+
+  // ── 結果 ──
+  const pass = checks.every((c) => c.ok);
+  document.title = pass ? 'PASS' : 'FAIL';
+  document.getElementById('result').textContent = JSON.stringify({ pass, 去背毫秒: ms, 縮放: +scale.toFixed(4), measured, checks }, null, 1);
+
+  // 方便人眼看：原圖、去背結果
+  const view = document.getElementById('view');
+  view.append(cv);
+  const out = document.createElement('canvas');
+  out.width = W; out.height = H;
+  out.getContext('2d').putImageData(new ImageData(res.data, W, H), 0, 0);
+  view.append(out);
+
+  // 繪本插圖總覽（人眼檢查用）
+  const art = await import('../web/js/svg/gen-art.js');
+  const gallery = document.createElement('div');
+  gallery.id = 'gallery';
+  gallery.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px';
+  for (const [name, fn] of Object.entries(art)) {
+    const cell = document.createElement('figure');
+    cell.style.cssText = 'margin:0;background:#fff;border:1px solid #ddd;padding:8px';
+    cell.innerHTML = fn() + `<figcaption>${name}</figcaption>`;
+    gallery.append(cell);
+  }
+  document.body.prepend(gallery);
+</script>
+</html>

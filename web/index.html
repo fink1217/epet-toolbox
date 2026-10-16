@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>電子雞工具箱</title>
+  <meta name="description" content="從焊接、做素材到燒錄，一步一步做出自己的電子雞。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    .hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; padding: 18px 0 30px; }
+    .hero .mascot { width: min(260px, 60vw); height: auto; margin: 0 auto; }
+    .hero p.lead { font-size: 18px; color: var(--ink-2); max-width: 30em; }
+    .pick { margin: 10px 0 36px; }
+    .pick .version-card { grid-template-columns: 150px 1fr; align-items: center; gap: 16px; }
+    .pick .version-card svg { width: 150px; }
+    .tools { margin-top: 18px; }
+    .tool { display: grid; gap: 8px; text-decoration: none; color: inherit; transition: transform .12s; }
+    .tool:hover { transform: translateY(-2px); }
+    .tool .num { font-family: var(--font-display); font-size: 34px; color: var(--yolk); line-height: 1; }
+    .tool h3 { margin: 0; }
+    .tool p { color: var(--ink-2); margin: 0; font-size: 15px; }
+    .flow { margin-top: 36px; }
+    .flow .figure { overflow-x: auto; }
+    .flow .figure svg { min-width: 760px; }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero .art { order: -1; }
+      .pick .version-card { grid-template-columns: 110px 1fr; }
+      .pick .version-card svg { width: 110px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <h1>做一隻會動、會叫、<br>會撒嬌的電子雞</h1>
+        <p class="lead">焊好電路、畫好角色、按一下燒進去。每一步都有圖照著做；想知道原理，再點開「為什麼」。</p>
+      </div>
+      <div class="art" id="hero-art"></div>
+    </section>
+
+    <section class="pick">
+      <h2>先選你要做哪一台</h2>
+      <div class="grid-2" id="versions"></div>
+    </section>
+
+    <section>
+      <h2>三個工具，照順序用</h2>
+      <div class="grid-3 tools">
+        <a class="card tool" href="wiring.html">
+          <span class="num">①</span><h3>接線教學</h3>
+          <p>一步一張圖，把螢幕、馬達、喇叭、感壓片、電池焊起來。</p>
+        </a>
+        <a class="card tool" href="assets.html">
+          <span class="num">②</span><h3>素材生成器</h3>
+          <p>把 AI 畫的角色、背景、音效丟進來，自動去背、對齊、整理好。</p>
+        </a>
+        <a class="card tool" href="deploy.html">
+          <span class="num">③</span><h3>寫入裝置</h3>
+          <p>插上 USB 一鍵刷韌體；選好 SD 卡一鍵打包素材。</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="flow">
+      <h2>整套工具怎麼串起來</h2>
+      <div class="figure" id="flow"></div>
+      <div id="flow-why"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { mountShell, h, svgEl, getVersionId, setVersionId, why } from './js/core.js';
+    import { VERSIONS, BOARDS } from './js/data/boards.js';
+    import { mascot } from './js/svg/mascot.js';
+    import { productDevice, personalDevice, pipeline } from './js/svg/devices.js';
+
+    mountShell('home');
+    document.getElementById('hero-art').append(svgEl(mascot({ mood: 'cheer' })));
+
+    const art = { product: productDevice, personal: personalDevice };
+    const box = document.getElementById('versions');
+    function paint() {
+      box.replaceChildren(...Object.values(VERSIONS).map((v) =>
+        h('button', { class: 'version-card', 'aria-pressed': String(getVersionId() === v.id), onclick: () => setVersionId(v.id) },
+          svgEl(art[v.id]()),
+          h('div', { class: 'stack' },
+            h('span', { class: 'name' }, v.name),
+            h('span', { class: 'muted' }, v.tagline),
+            h('span', { class: 'chip' }, BOARDS[v.board].name)))));
+    }
+    paint();
+    window.addEventListener('versionchange', paint);
+
+    document.getElementById('flow').append(svgEl(pipeline()));
+    document.getElementById('flow-why').append(why([
+      {
+        art: pipeline(),
+        title: '資料只往一個方向流',
+        text: '<p>AI 圖 → 素材資料夾 → SD 卡 → 電子雞。每個工具只負責一段，前一段的輸出就是下一段的輸入。</p><p>出問題的時候，只要看是哪一段的輸出不對，不用整套翻。</p>',
+      },
+      {
+        art: personalDevice(),
+        title: '為什麼不讓 ESP32 自己縮圖？',
+        text: '<p>ESP32 的算力大概是手機的幾十分之一。讓它現場把大圖縮小，又慢又醜。</p><p>所以縮圖、去背、轉檔全部在電腦上做好，ESP32 只負責「讀出來、貼上去」。換大螢幕時重新打包一次就好，不用重畫。</p>',
+      },
+      {
+        art: productDevice(),
+        title: '兩台用同一套',
+        text: '<p>商品版和自玩版只差在「怎麼操作」：一個摸螢幕、一個轉旋鈕。其他零件、接法、素材全部一樣。</p><p>一樣的東西只做一次，維護的時候才不會改了這邊忘了那邊。</p>',
+      },
+    ], '為什麼要分成這幾段？'));
+  </script>
+</body>
+</html>

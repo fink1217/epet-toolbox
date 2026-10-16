@@ -1,0 +1,95 @@
+/* 接線教學頁專用樣式（共用元件在 base.css） */
+
+.step-figure { padding: 14px; position: sticky; top: 78px; }
+.step-figure > svg { width: 100%; height: auto; max-height: 76vh; }
+.step-figure .figure-tools { position: static; display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.side-tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.side-btn {
+  border: 1px solid var(--line-2); background: var(--surface); border-radius: 999px; padding: 5px 12px;
+  font: 500 13px var(--font-body); color: var(--ink-2); cursor: pointer;
+}
+.side-tabs .side-btn { border-color: transparent; }
+.side-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+@media (min-width: 881px) { .step.wide { grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 24px; } }
+@media (max-width: 880px) { .step-figure { position: static; } }
+
+.step-text h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.done-chip { font-family: var(--font-body); font-size: 13px; }
+.todo b, .conn b { color: var(--ink); }
+.todo li { line-height: 1.6; }
+.callouts { display: grid; gap: 8px; }
+.cta { margin-top: 18px; width: 100%; }
+
+/* 連線表 */
+.conn { display: grid; gap: 4px; margin: 12px 0 4px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+.conn-row { display: grid; grid-template-columns: 14px minmax(0, 1fr) 18px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 14.5px; }
+.conn-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.conn-from { font-weight: 700; }
+.conn-arrow { color: var(--muted); text-align: center; }
+.conn-to { font-weight: 700; color: var(--teal); }
+
+/* 零件清點 */
+.prep h4 { margin: 4px 0 10px; font-size: 17px; }
+.prep h4 + .part-grid { margin-bottom: 18px; }
+.part-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.part-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 8px 10px; text-align: center; }
+.part-card svg { width: 100%; height: auto; max-height: 76px; }
+.part-name { font-size: 12.5px; line-height: 1.4; margin-top: 4px; color: var(--ink); }
+.part-qty { font-size: 12px; color: var(--muted); }
+
+/* 放大檢視 */
+dialog.zoom { border: 0; border-radius: 18px; padding: 16px; width: min(1400px, 96vw); max-height: 94vh; overflow: auto; background: var(--paper); }
+dialog.zoom::backdrop { background: rgba(30, 31, 34, .55); }
+dialog.zoom svg { width: 100%; height: auto; }
+.zoom-close { position: sticky; top: 0; float: right; z-index: 2; }
+@media (max-width: 700px) { dialog.zoom svg { min-width: 860px; } }
+
+.step-list button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 滑鼠提示：圖上的零件、落點、排針、孔 ── */
+.hover-tip {
+  position: fixed; z-index: 70; max-width: 270px; pointer-events: none;
+  background: #1E1F22; color: #F3F4F6; border-radius: 12px; padding: 10px 12px;
+  font-size: 13.5px; line-height: 1.55; box-shadow: var(--shadow-lg);
+}
+.hover-tip[hidden] { display: none; }
+.tip-title { font-weight: 700; font-size: 14.5px; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+.tip-id { background: var(--yolk); color: #2A1A00; border-radius: 6px; padding: 0 7px; font-size: 13px; }
+.tip-where { color: #FFD27A; }
+.tip-role { color: #B8BEC6; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.tip-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #fff; flex: none; }
+
+.step-figure [data-part], .step-figure [data-pad], .step-figure [data-pin],
+dialog.zoom [data-part], dialog.zoom [data-pad], dialog.zoom [data-pin] { cursor: help; }
+.hub-part:hover, .hub-part.hl, .hub-pad:hover, .hub-pad.hl, .board-pin:hover, .board-pin.hl {
+  filter: drop-shadow(0 0 2px #FF8A00) drop-shadow(0 0 5px #FFB020);
+}
+.hub-hole:hover circle:first-child { stroke: #FF8A00; stroke-width: 2.5; }
+.hl-ring { fill: rgba(255, 176, 32, .22); stroke: #FF8A00; stroke-width: 4.5; pointer-events: none; animation: ring 1s ease-in-out infinite; }
+@keyframes ring { 50% { stroke-opacity: .45; fill-opacity: .4; } }
+
+/* 文字裡可以指的代號：R1、C4… */
+.ref { border-bottom: 1.5px dashed #C99A2E; cursor: help; }
+.ref:hover { background: var(--yolk-soft); border-radius: 4px; }
+
+/* 組合圖的電線不吃滑鼠事件：讓底下的落點、排針收得到提示 */
+.step-figure .wire, dialog.zoom .wire, .step-figure .hub-labels, dialog.zoom .hub-labels { pointer-events: none; }
+
+/* ── 管路高光：同一條電氣網路一起亮 ── */
+.net-path { fill: none; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; opacity: 0; pointer-events: none; transition: opacity .12s; }
+.net-path.xray { stroke-width: 6; stroke-dasharray: 2 8; }
+.net-dot { fill: none; stroke-width: 4; opacity: 0; pointer-events: none; transition: opacity .12s; }
+.net-layer .on { opacity: .9; }
+.net-layer .net-dot.on { opacity: 1; }
+.tip-net { color: #E9E9E9; margin-top: 6px; padding-top: 6px; border-top: 1px solid #3A3D44; display: flex; gap: 6px; align-items: center; }
+
+/* 正面的透視提示：這一步背面要拉的錫橋 */
+.xray-new { fill: none; stroke: #FF8A00; stroke-width: 4; stroke-dasharray: 2 7; stroke-linecap: round; opacity: .85; pointer-events: none; }
+.hub-trace { cursor: help; }
+
+/* 總圖裡的外接模組：滑鼠移上去看說明 */
+.hub-mod { cursor: help; }
+.hub-mod:hover { filter: drop-shadow(0 0 3px #FF8A00) drop-shadow(0 0 6px #FFB020); }
+
+/* 背面圖上的零件透視（正面的零件半透明疊上來） */
+.ghost { opacity: .38; }

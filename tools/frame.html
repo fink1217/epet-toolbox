@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>手機寬度預覽</title>
+<style>body{margin:0;background:#888}iframe{border:0;display:block;background:#fff}</style>
+<iframe id="f"></iframe>
+<script>
+  // 用法：/tools/frame.html?src=/web/index.html&w=390&h=1700
+  const q = new URLSearchParams(location.search);
+  const f = document.getElementById('f');
+  f.width = q.get('w') || 390;
+  f.height = q.get('h') || 1700;
+  f.src = q.get('src');
+</script>
