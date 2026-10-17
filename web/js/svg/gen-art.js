@@ -1,24 +1,27 @@
 // 素材生成器「為什麼」繪本的插圖。每個函式回傳一段 SVG 字串。
-const INK = '#1E1F22';
-const LINE = '#DDD3C2';
+import { pixelActor } from './stage.js';
+
+const INK = '#1B1A17';
+const LINE = '#CFC5B1';
 const GREEN = '#22D35B';
-const TEAL = '#11807A';
-const RED = '#D93F3F';
-const YOLK = '#FFB020';
+const TEAL = '#2F6B55';
+const RED = '#B3392B';
+const YOLK = '#C49A3C';
+const ACCENT = '#A63A2B';
+const WHITE = '#FFFDF8';
 const FONT = 'font-family="Noto Sans TC, sans-serif"';
 
 const svg = (w, h, body) =>
   `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 
-// 簡化小雞：(cx, 腳底 y, 大小)
-const chick = (cx, foot, s = 1, extra = '') => `
-  <g transform="translate(${cx} ${foot}) scale(${s})">
-    <ellipse cx="0" cy="-30" rx="26" ry="28" fill="#FFC93C"/>
-    <ellipse cx="0" cy="-24" rx="17" ry="17" fill="#FFE08A"/>
-    <circle cx="-9" cy="-36" r="3" fill="${INK}"/><circle cx="9" cy="-36" r="3" fill="${INK}"/>
-    <path d="M-4 -30 l4 5 l4 -5z" fill="#FF8A00"/>
-    <path d="M0 -58 q-4 -6 -1 -9 q1 4 5 2 q-1 5 -4 7z" fill="#FF9F0A"/>
-    <path d="M-8 -2 v4 M8 -2 v4" stroke="#FF8A00" stroke-width="3" stroke-linecap="round"/>
+// 插畫版角色：白色小貓，跟提示詞的預設角色一樣。(cx, 腳底 y, 大小)
+const pal = (cx, foot, s = 1, extra = '') => `
+  <g transform="translate(${cx} ${foot}) scale(${s})" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M-21 -36 L-17 -58 L-5 -46Z M21 -36 L17 -58 L5 -46Z" fill="${WHITE}"/>
+    <path d="M-24 -6 C-26 -32 -20 -48 0 -48 C20 -48 26 -32 24 -6 C22 0 -22 0 -24 -6Z" fill="${WHITE}"/>
+    <circle cx="-9" cy="-28" r="3.2" fill="${INK}" stroke="none"/><circle cx="9" cy="-28" r="3.2" fill="${INK}" stroke="none"/>
+    <path d="M-4 -21 q2 2 4 0 q2 2 4 0" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+    <ellipse cx="-15" cy="-19" rx="3.6" ry="2" fill="${ACCENT}" opacity=".35" stroke="none"/><ellipse cx="15" cy="-19" rx="3.6" ry="2" fill="${ACCENT}" opacity=".35" stroke="none"/>
     ${extra}
   </g>`;
 
@@ -40,12 +43,12 @@ function checker(x, y, w, h, s = 10) {
 export function artSolidBg() {
   return svg(320, 180, `
     <rect x="14" y="20" width="130" height="120" rx="10" fill="${GREEN}"/>
-    ${chick(79, 122, 1.25)}
+    ${pal(79, 122, 1.25)}
     ${ok(132, 32)}
     ${label(79, 162, '純色背景：一眼分得出來')}
     <g>${checker(176, 20, 130, 120)}</g>
     <rect x="176" y="20" width="130" height="120" rx="10" fill="none" stroke="${LINE}"/>
-    ${chick(241, 122, 1.25)}
+    ${pal(241, 122, 1.25)}
     ${no(294, 32)}
     ${label(241, 162, '「透明」其實是畫的格子')}
   `);
@@ -59,9 +62,9 @@ export function artPaintBucket() {
     <defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${TEAL}"/></marker></defs>
     ${checker(20, 20, 280, 150, 12)}
     <rect x="20" y="20" width="280" height="150" rx="10" fill="none" stroke="${LINE}" stroke-width="2"/>
-    <circle cx="186" cy="100" r="20" fill="none" stroke="#FFC93C" stroke-width="10"/>
+    <circle cx="186" cy="100" r="20" fill="none" stroke="${YOLK}" stroke-width="10"/>
     <circle cx="192" cy="100" r="11" fill="${GREEN}"/>
-    ${chick(132, 150, 1.6)}
+    ${pal(132, 150, 1.6)}
     ${arrows}
     <path d="M204 100 L224 92" stroke="${RED}" stroke-width="1.5"/>
     <text x="226" y="90" ${FONT} font-size="12" fill="${RED}">圍住的綠色</text>
@@ -74,15 +77,15 @@ export function artPaintBucket() {
 export function artWand() {
   return svg(320, 180, `
     ${checker(20, 20, 130, 130, 10)}
-    <circle cx="96" cy="78" r="20" fill="none" stroke="#FFC93C" stroke-width="9"/>
+    <circle cx="96" cy="78" r="20" fill="none" stroke="${YOLK}" stroke-width="9"/>
     <circle cx="101" cy="78" r="11" fill="${GREEN}"/>
-    ${chick(70, 140, 1.2)}
+    ${pal(70, 140, 1.2)}
     <path d="M120 40 l-12 30" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
     <path d="M122 32 l3 -6 M128 38 l6 -3 M114 34 l-2 -6" stroke="${YOLK}" stroke-width="3" stroke-linecap="round"/>
     ${label(85, 170, '魔術棒：點一下去一塊')}
     ${checker(170, 20, 130, 130, 10)}
-    <circle cx="246" cy="78" r="20" fill="none" stroke="#FFC93C" stroke-width="9"/>
-    ${chick(220, 140, 1.2)}
+    <circle cx="246" cy="78" r="20" fill="none" stroke="${YOLK}" stroke-width="9"/>
+    ${pal(220, 140, 1.2)}
     ${label(235, 170, '全部同色：一次全去掉')}
   `);
 }
@@ -93,10 +96,10 @@ export function artSplit() {
     <circle cx="${x + 10}" cy="34" r="10" fill="${TEAL}"/>${label(x + 10, 38.5, n, '#fff', 12)}`;
   return svg(320, 180, `
     ${checker(14, 20, 292, 120, 10)}
-    ${chick(54, 124, 1.25)}
-    ${chick(150, 124, 1.25, '<path d="M-14 -20 q-14 -6 -20 4" stroke="#FFC93C" stroke-width="7" fill="none" stroke-linecap="round"/>')}
-    <path d="M196 60 l3 7 l7 1 l-5 5 l1 7 l-6 -4 l-6 4 l1 -7 l-5 -5 l7 -1z" fill="#FFE08A" stroke="#E2B44A"/>
-    ${chick(258, 124, 1.25)}
+    ${pal(54, 124, 1.25)}
+    ${pal(150, 124, 1.25, `<path d="M-22 -18 q-10 -6 -12 -16" fill="none" stroke-linecap="round"/><circle cx="-34" cy="-37" r="4.5" fill="${WHITE}"/>`)}
+    <path d="M196 60 l3 7 l7 1 l-5 5 l1 7 l-6 -4 l-6 4 l1 -7 l-5 -5 l7 -1z" fill="#EAD7A4" stroke="${YOLK}"/>
+    ${pal(258, 124, 1.25)}
     ${box(16, 1)}${box(112, 2)}${box(220, 3)}
     <path d="M190 74 q-10 6 -14 0" stroke="${YOLK}" stroke-width="2" fill="none" marker-end="url(#ah2)"/>
     <defs><marker id="ah2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${YOLK}"/></marker></defs>
@@ -106,7 +109,7 @@ export function artSplit() {
 
 // ── 同一條腳底線 ──
 export function artBaseline() {
-  const frame = (x, dy, s) => `<rect x="${x}" y="30" width="56" height="100" rx="4" fill="#fff" stroke="${LINE}"/>${chick(x + 28, 118 + dy, s * 0.9)}`;
+  const frame = (x, dy, s) => `<rect x="${x}" y="30" width="56" height="100" rx="4" fill="#fff" stroke="${LINE}"/>${pal(x + 28, 118 + dy, s * 0.9)}`;
   return svg(320, 180, `
     ${frame(14, -10, 0.9)}${frame(76, 6, 1.05)}
     <path d="M14 144 q30 -14 62 0 q30 14 62 0" stroke="${RED}" stroke-width="2.5" fill="none" stroke-dasharray="4 4"/>
@@ -122,23 +125,17 @@ export function artBaseline() {
 
 // ── 母檔要畫大 ──
 export function artBigMaster() {
-  let pixels = '';
-  for (let j = 0; j < 6; j++)
-    for (let i = 0; i < 6; i++) {
-      const inside = (i - 2.5) ** 2 + (j - 2.7) ** 2 < 8;
-      if (inside) pixels += `<rect x="${208 + i * 14}" y="${44 + j * 14}" width="14" height="14" fill="${(i + j) % 3 ? '#FFC93C' : '#F2B730'}"/>`;
-    }
   return svg(320, 180, `
     <rect x="16" y="26" width="96" height="96" rx="8" fill="#fff" stroke="${LINE}"/>
-    ${chick(64, 112, 1.5)}
+    ${pal(64, 112, 1.5)}
     <path d="M118 74 h20" stroke="${INK}" stroke-width="2.5" marker-end="url(#ah3)"/>
     <defs><marker id="ah3" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${INK}"/></marker></defs>
     <rect x="146" y="50" width="44" height="44" rx="4" fill="#fff" stroke="${LINE}"/>
-    ${chick(168, 89, 0.62)}
+    ${pal(168, 89, 0.62)}
     ${ok(186, 44)}
     ${label(100, 150, '大縮小：清楚')}
     <rect x="204" y="40" width="92" height="92" rx="6" fill="#fff" stroke="${LINE}"/>
-    ${pixels}
+    ${pixelActor(250, 124, 7, '#4A463F')}
     ${no(296, 40)}
     ${label(250, 150, '小放大：糊成格子')}
   `);
@@ -147,7 +144,7 @@ export function artBigMaster() {
 // ── 背景安全框 ──
 export function artSafeArea() {
   const W = 90, H = 160, x0 = 30, y0 = 10;
-  const frames = [[172, 320, YOLK], [240, 320, TEAL], [320, 480, '#8E4EC6']].map(([w, h, c]) => {
+  const frames = [[172, 320, YOLK], [240, 320, TEAL], [320, 480, ACCENT]].map(([w, h, c]) => {
     const s = Math.max(w / 1080, h / 1920);
     const vw = (w / s) * (W / 1080), vh = (h / s) * (H / 1920);
     return `<rect x="${x0 + (W - vw) / 2}" y="${y0 + (H - vh) / 2}" width="${vw}" height="${vh}" fill="none" stroke="${c}" stroke-width="2.4" stroke-dasharray="5 3"/>`;
@@ -155,14 +152,14 @@ export function artSafeArea() {
   return svg(320, 180, `
     <rect x="${x0}" y="${y0}" width="${W}" height="${H}" rx="6" fill="#BFE7FF"/>
     <rect x="${x0}" y="${y0 + H * 0.72}" width="${W}" height="${H * 0.28}" fill="#A8E6A1"/>
-    <circle cx="${x0 + 70}" cy="${y0 + 26}" r="9" fill="#FFE08A"/>
+    <circle cx="${x0 + 70}" cy="${y0 + 26}" r="9" fill="#EAD7A4"/>
     ${frames}
     <path d="M${x0 + 45} ${y0 + 70} l5 10 l11 2 l-8 8 l2 11 l-10 -5 l-10 5 l2 -11 l-8 -8 l11 -2z" fill="${YOLK}"/>
     ${label(150, 50, '每種螢幕看到的範圍不一樣，', INK, 13, 'start')}
     ${label(150, 72, '但「正中間」大家都看得到。', INK, 13, 'start')}
     <rect x="150" y="96" width="14" height="4" fill="${YOLK}"/>${label(170, 101, '172×320', INK, 11, 'start')}
     <rect x="150" y="116" width="14" height="4" fill="${TEAL}"/>${label(170, 121, '240×320', INK, 11, 'start')}
-    <rect x="150" y="136" width="14" height="4" fill="#8E4EC6"/>${label(170, 141, '320×480', INK, 11, 'start')}
+    <rect x="150" y="136" width="14" height="4" fill="${ACCENT}"/>${label(170, 141, '320×480', INK, 11, 'start')}
   `);
 }
 
@@ -172,10 +169,10 @@ export function artMargin() {
     ${checker(30, 20, 110, 110, 11)}
     <rect x="30" y="20" width="110" height="110" fill="none" stroke="${LINE}"/>
     <rect x="37" y="27" width="96" height="96" fill="none" stroke="${TEAL}" stroke-dasharray="4 3"/>
-    <circle cx="85" cy="75" r="44" fill="#FF8A8A"/><path d="M85 52 v46 M62 75 h46" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="85" cy="75" r="44" fill="#C96A5B"/><path d="M85 52 v46 M62 75 h46" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
     ${label(85, 152, '四邊留一點空')}
     ${checker(180, 20, 110, 110, 11)}
-    <circle cx="235" cy="75" r="62" fill="#FF8A8A"/><path d="M235 40 v70 M200 75 h70" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="235" cy="75" r="62" fill="#C96A5B"/><path d="M235 40 v70 M200 75 h70" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
     <rect x="180" y="20" width="110" height="110" fill="none" stroke="${RED}" stroke-width="2"/>
     ${label(235, 152, '貼邊：縮小後會被切到', RED)}
   `);
@@ -195,8 +192,8 @@ function wave(x, y, w, amp, pad = 0, color = TEAL) {
 export function artSound() {
   return svg(320, 190, `
     ${label(16, 22, '原本', INK, 12, 'start')}
-    ${wave(16, 50, 130, 8, 0.25, '#8A8F98')}
-    ${wave(16, 90, 130, 22, 0.1, '#8A8F98')}
+    ${wave(16, 50, 130, 8, 0.25, '#8A8377')}
+    ${wave(16, 90, 130, 22, 0.1, '#8A8377')}
     <path d="M156 70 h22" stroke="${INK}" stroke-width="2.5" marker-end="url(#ah4)"/>
     <defs><marker id="ah4" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${INK}"/></marker></defs>
     ${label(186, 22, '處理後', INK, 12, 'start')}
@@ -210,10 +207,10 @@ export function artSound() {
 // ── 只存改過的文字 ──
 export function artOnlyChanged() {
   const row = (y, k, v, mine) => `
-    <rect x="20" y="${y}" width="280" height="30" rx="8" fill="${mine ? '#FFF3D6' : '#fff'}" stroke="${mine ? YOLK : LINE}"/>
-    ${label(34, y + 20, k, '#8A8F98', 12, 'start')}
+    <rect x="20" y="${y}" width="280" height="30" rx="8" fill="${mine ? '#F4EAD0' : '#fff'}" stroke="${mine ? YOLK : LINE}"/>
+    ${label(34, y + 20, k, '#8A8377', 12, 'start')}
     ${label(120, y + 20, v, INK, 13, 'start')}
-    ${mine ? label(290, y + 20, '你改的', '#6B4300', 11, 'end') : label(290, y + 20, '預設', '#8A8F98', 11, 'end')}`;
+    ${mine ? label(290, y + 20, '你改的', '#6B5017', 11, 'end') : label(290, y + 20, '預設', '#8A8377', 11, 'end')}`;
   return svg(320, 170, `
     ${row(14, '名字', '小毛', true)}
     ${row(52, '餵食', '餵食', false)}

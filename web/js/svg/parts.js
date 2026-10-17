@@ -1,4 +1,5 @@
 // 零件畫法：小電路板上的零件（俯視圖）、外接模組、零件清點用的小圖示。全部回傳 SVG 字串。
+import { stageMark } from './stage.js';
 
 export const BAND = {
   black: '#1B1B1B', brown: '#7B4A1E', red: '#D3322C', orange: '#F07F1A', yellow: '#F2C21B', green: '#2E9E44',
@@ -333,10 +334,8 @@ export function icon(kind, opt = {}) {
     case 'board':
       return wrapIcon(`
         <rect x="34" y="6" width="52" height="78" rx="12" fill="#1E1F22"/>
-        <rect x="40" y="12" width="40" height="66" rx="5" fill="#BFE7FF"/>
-        <rect x="40" y="58" width="40" height="20" fill="#A8E6A1"/>
-        <circle cx="60" cy="52" r="9" fill="#FFC93C"/><circle cx="57" cy="50" r="1.4" fill="#1E1F22"/><circle cx="63" cy="50" r="1.4" fill="#1E1F22"/>
-        <path d="M58 53 l2 3 l2 -3z" fill="#FF8A00"/>
+        <rect x="40" y="12" width="40" height="66" rx="5" fill="#26272B"/>
+        ${stageMark({ box: { x: 43, y: 32, w: 34 }, color: '#F3EEE3' })}
         ${opt.touch ? '<path d="M78 64 q0 -9 5 -9 q5 0 5 9 v14 q0 8 -10 9 q-8 0 -10 -8 l-3 -10 q-1 -4 3 -4 q3 0 5 4z" fill="#F6C9A8" stroke="#1E1F22" stroke-width="1.6"/>' : ''}`);
     case 'perfboard':
       return wrapIcon(`

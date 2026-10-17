@@ -1,6 +1,8 @@
-# 電子雞工具箱
+# PENG! 數位戲台
 
-從焊接、做素材到燒錄，一步一步做出自己的電子雞（ESP32-S3-Touch-LCD-1.47）。
+電子雞開放架構平台。PENG! 就是戲台：台子自己焊、角色自己畫，按一下燒進去，角色就上台（ESP32-S3-Touch-LCD-1.47）。
+
+品牌圖形（戲台標誌、像素角色）都在 `web/js/svg/stage.js`；拿到正式 Logo 向量檔時只要換那一個檔，favicon 再從它重新產生。
 
 **線上使用：** https://fink1217.github.io/epet-toolbox/
 （請用電腦版 Chrome 或 Edge；刷韌體與直接寫入 SD 卡只有這兩個瀏覽器支援）

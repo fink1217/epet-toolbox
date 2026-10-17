@@ -11,7 +11,7 @@ import { artSafeArea, artBigMaster } from '../svg/gen-art.js';
 const BW = MASTER.background.w;   // 1080
 const BH = MASTER.background.h;   // 1920
 const VIEW = 640;                 // 預覽畫布長邊
-const COLORS = ['#FFB020', '#11807A', '#8E4EC6', '#D93F3F'];
+const COLORS = ['#C49A3C', '#2F6B55', '#A63A2B', '#1B1A17'];   // 跟 gen-art.js 的安全框圖例同順序
 
 export function backgroundPanel() {
   const state = { src: null, name: '', fx: 0.5, fy: 0.5, id: 'day' };

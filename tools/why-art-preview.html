@@ -6,9 +6,11 @@
 <div class="g" id="g"></div>
 <script type="module">
   // 用法：/tools/why-art-preview.html?only=moduleInside,moduleVsBare
-  import * as A from '/web/js/svg/why-art.js';
-  const only = new URLSearchParams(location.search).get('only');
-  const names = only ? only.split(',') : Object.keys(A);
+  //       /tools/why-art-preview.html?mod=gen-art（其他插圖模組：deploy-art、devices…；只列不用參數的函式）
+  const q = new URLSearchParams(location.search);
+  const A = await import(`/web/js/svg/${q.get('mod') || 'why-art'}.js`);
+  const only = q.get('only');
+  const names = only ? only.split(',') : Object.keys(A).filter((k) => typeof A[k] === 'function' && A[k].length === 0);
   const g = document.getElementById('g');
   for (const n of names) {
     const d = document.createElement('div');

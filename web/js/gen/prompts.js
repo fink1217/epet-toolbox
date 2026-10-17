@@ -5,7 +5,7 @@ import { copyButton } from './ui.js';
 
 const DESC_KEY = 'epet.gen.desc';
 const LANG_KEY = 'epet.gen.lang';
-const DEFAULT_DESC = { zh: '一隻戴護目鏡的黃色小雞，圓滾滾、大眼睛', en: 'a round yellow chick wearing goggles, big eyes' };
+const DEFAULT_DESC = { zh: '一隻圓滾滾的白色小貓，大眼睛', en: 'a round little white cat with big eyes' };
 
 const BG_COLOR = { zh: '純亮綠色（#00FF00）', en: 'solid bright green (#00FF00)' };
 
@@ -18,7 +18,7 @@ const TEMPLATES = {
   },
   background: {
     pick: BACKGROUNDS,
-    zh: (d, s) => `請畫電子雞的「${s.zh}」場景背景，直式 9:16。重要的東西放在畫面正中間，上下左右邊緣可能會被裁掉。不要畫角色、不要文字。高解析插畫風，跟「${d}」的畫風一致。`,
+    zh: (d, s) => `請畫電子寵物遊戲的「${s.zh}」場景背景，直式 9:16。重要的東西放在畫面正中間，上下左右邊緣可能會被裁掉。不要畫角色、不要文字。高解析插畫風，跟「${d}」的畫風一致。`,
     en: (d, s) => `A vertical 9:16 background scene for a virtual pet, time of day: "${s.zh}". Keep important things in the center; edges may be cropped. No characters, no text. High-resolution illustration matching the style of ${d}.`,
   },
   icon: {
@@ -28,7 +28,7 @@ const TEMPLATES = {
   },
   item: {
     pick: ITEMS,
-    zh: (d, s) => `請畫電子雞會用到的「${s.zh}」道具，單獨一個、置中。背景是${BG_COLOR.zh}，不要陰影、不要地板、不要文字，道具本身不要用綠色。畫風跟「${d}」一致。`,
+    zh: (d, s) => `請畫電子寵物遊戲會用到的「${s.zh}」道具，單獨一個、置中。背景是${BG_COLOR.zh}，不要陰影、不要地板、不要文字，道具本身不要用綠色。畫風跟「${d}」一致。`,
     en: (d, s) => `A single "${s.zh}" item for a virtual pet game, centered. Background: ${BG_COLOR.en}, no shadow, no floor, no text, no green on the item. Style matching ${d}.`,
   },
 };

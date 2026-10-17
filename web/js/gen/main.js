@@ -1,7 +1,6 @@
 // ② 素材生成器：頁面組裝。上面是素材資料夾與清單，下面一次只顯示一種素材的工作區。
-import { mountShell, h, store, support, warnIfUnsupported, callout, toast, svgEl } from '../core.js';
+import { mountShell, h, store, support, warnIfUnsupported, callout, say, toast } from '../core.js';
 import { ANIMS, BACKGROUNDS, ICONS, ITEMS, SOUNDS } from '../data/vocab.js';
-import { mascot } from '../svg/mascot.js';
 import { folder, onFolder, initFolder, connect, resume, refresh } from './folder.js';
 import { characterPanel } from './character.js';
 import { backgroundPanel } from './background.js';
@@ -37,8 +36,7 @@ main.append(h('div', { class: 'page-head gen-head' },
   h('div', {},
     h('h1', {}, '② 素材生成器'),
     h('p', {}, '把 AI 畫的圖、下載的音效丟進來，自動去背、切格、對齊、轉檔，整理進你的素材資料夾。')),
-  h('div', { class: 'say' }, svgEl(mascot({ mood: 'cheer' })),
-    h('div', { class: 'bubble' }, '必要的只有兩樣：', h('b', {}, '待機動作'), '和', h('b', {}, '白天背景'), '。'))));
+  say('必要的只有兩樣：<b>待機動作</b>和<b>白天背景</b>。')));
 
 // ── 素材資料夾卡片 ──
 const folderCard = h('section', { class: 'card folder-card' });
@@ -64,7 +62,7 @@ function renderFolder() {
     parts.push(h('div', { class: 'row' },
       h('div', { class: 'grow' },
         h('div', { class: 'folder-name' }, '先選一個素材資料夾'),
-        h('div', { class: 'small muted' }, '建議在「文件」裡新增一個空資料夾，例如「我的電子雞」。之後所有素材都存在這裡。')),
+        h('div', { class: 'small muted' }, '建議在「文件」裡新增一個空資料夾，例如「我的戲台素材」。之後所有素材都存在這裡。')),
       h('button', { class: 'btn btn-primary btn-lg', onclick: () => run(connect) }, '選擇／建立資料夾')));
   }
   parts.push(checklist());

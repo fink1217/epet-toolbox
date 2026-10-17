@@ -1,20 +1,20 @@
 // 驗證小電路板配置：每個網路該連的都連上、不該連的沒有短路、零件擺得進去。
-// 每一種配置（觸控／旋鈕 × 裸馬達／馬達模組）都各驗一次。
+// 每一種配置（觸控／旋鈕 × 裸馬達／馬達模組）都各驗一次；有換料版（alt）的配置，換料後再驗一次。
 // 用法：node tools/check-hub.mjs
-import { HUB, HUB_NETS, LEAD_SPAN, STEP_ONLY } from '../web/js/data/hub.js';
+import { HUB, HUB_NETS, LEAD_SPAN, STEP_ONLY, withAlt } from '../web/js/data/hub.js';
 import { VERSIONS, featuresOf, included } from '../web/js/data/boards.js';
 
 const key = ([x, y]) => x + ',' + y;
 const inGrid = ([x, y]) => x >= 0 && x < HUB.cols && y >= 0 && y < HUB.rows;
 const dist = (u, v) => Math.abs(u[0] - v[0]) + Math.abs(u[1] - v[1]);
 
-function check(features) {
+function check(features, hub) {
   const errors = [];
   const has = (item) => included(item, features);
-  const parts = HUB.parts.filter(has);
-  const pads = HUB.pads.filter(has);
-  const traces = HUB.traces.filter(has);
-  const jumpers = HUB.jumpers.filter(has);
+  const parts = hub.parts.filter(has);
+  const pads = hub.pads.filter(has);
+  const traces = hub.traces.filter(has);
+  const jumpers = hub.jumpers.filter(has);
 
   // 並查集：孔與孔之間的電氣連通
   const parent = new Map();
@@ -108,20 +108,29 @@ function check(features) {
   return { errors, parts: parts.length, pads: pads.length, nets: nets.length };
 }
 
+// 換料版的整塊板子
+const ALT_HUB = { ...HUB, parts: HUB.parts.map(withAlt), traces: HUB.traces.map(withAlt) };
+const altNames = HUB.parts.filter((p) => p.alt).map((p) => p.id + ' 換 ' + p.alt.value).join('、');
+const usesAlt = (features) => [...HUB.parts, ...HUB.traces].some((x) => x.alt && included(x, features));
+
 // 所有配置：兩種操作 × 兩種馬達（不只檢查現在兩個版本用到的組合）
 const inputs = [...new Set(Object.values(VERSIONS).map((v) => v.input))];
 const motors = [...new Set(Object.values(VERSIONS).map((v) => v.motor))];
 let failed = 0;
 for (const input of inputs) {
   for (const motor of motors) {
-    const name = input + '＋' + motor;
-    const r = check(featuresOf({ input, motor }));
-    if (r.errors.length) {
-      failed++;
-      console.error('✗ ' + name + '：' + r.errors.length + ' 個問題');
-      for (const e of r.errors) console.error('  - ' + e);
-    } else {
-      console.log('✓ ' + name + '：' + r.parts + ' 個零件、' + r.pads + ' 個外部線落點、' + r.nets + ' 個網路，沒有斷路也沒有短路');
+    const features = featuresOf({ input, motor });
+    const runs = [[input + '＋' + motor, HUB]];
+    if (usesAlt(features)) runs.push([input + '＋' + motor + '（' + altNames + '）', ALT_HUB]);
+    for (const [name, hub] of runs) {
+      const r = check(features, hub);
+      if (r.errors.length) {
+        failed++;
+        console.error('✗ ' + name + '：' + r.errors.length + ' 個問題');
+        for (const e of r.errors) console.error('  - ' + e);
+      } else {
+        console.log('✓ ' + name + '：' + r.parts + ' 個零件、' + r.pads + ' 個外部線落點、' + r.nets + ' 個網路，沒有斷路也沒有短路');
+      }
     }
   }
 }

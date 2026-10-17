@@ -1,11 +1,12 @@
 // 全站共用：版本狀態、頁首、「為什麼」繪本、提示訊息、DOM 小工具。
 import { VERSIONS, BOARDS } from './data/boards.js';
-import { mascot } from './svg/mascot.js';
+import { stageMark } from './svg/stage.js';
 
 // ── 網頁字型 ──
 // 用 JS 插入樣式表，而不是在 CSS 裡 @import：@import 會讓整頁的程式等 Google 字型下載完，
 // 學校網路慢或連不到 Google 時頁面會卡住。現在字型慢慢來，頁面先用系統字型照常運作。
-const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap';
+// Noto Sans TC 不能拿掉：寫入裝置頁用它畫點陣字（deploy/font.js）。
+const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap';
 // 樣式表載完（或失敗、逾時）時完成；需要精確字型的功能（打包點陣字）要先等它
 export const fontsReady = new Promise((resolve) => {
   for (const href of ['https://fonts.googleapis.com', 'https://fonts.gstatic.com']) {
@@ -96,8 +97,7 @@ export function openVersionPicker({ required = false } = {}) {
         h('span', { class: 'chip' }, BOARDS[v.board].name),
       ));
     dlg.append(h('div', { class: 'picker-body stack' },
-      h('div', { class: 'say' }, svgEl(mascot({ mood: 'think' })),
-        h('div', { class: 'bubble' }, '你要做哪一台？之後隨時可以從右上角切換。')),
+      say('你要做哪一台？之後隨時可以從右上角切換。'),
       h('div', { class: 'grid-2' }, cards),
       required ? null : h('div', { class: 'row', style: 'justify-content:flex-end' },
         h('button', { class: 'btn btn-ghost', onclick: () => { dlg.close(); dlg.remove(); resolve(getVersion()); } }, '取消')),
@@ -124,7 +124,8 @@ const NAV = [
 export function mountShell(active) {
   const top = h('header', { class: 'topbar' },
     h('div', { class: 'wrap' },
-      h('a', { class: 'brand', href: 'index.html' }, svgEl(mascot({ mood: 'happy' })), '電子雞工具箱'),
+      h('a', { class: 'brand', href: 'index.html', 'aria-label': 'PENG! 數位戲台 首頁' }, svgEl(stageMark()),
+        h('span', {}, h('span', { class: 'brand-name' }, 'PENG!'), h('span', { class: 'brand-sub' }, '數位戲台'))),
       h('nav', { class: 'nav' }, NAV.map((n) =>
         h('a', { href: n.href, 'aria-current': n.id === active ? 'page' : false }, n.label))),
       loupeToggle(),
@@ -132,8 +133,8 @@ export function mountShell(active) {
     ));
   document.body.prepend(top);
   document.body.append(
-    h('footer', { class: 'site' }, h('div', { class: 'wrap' },
-      '電子雞工具箱 · 請用電腦版 Chrome 或 Edge 開啟（燒錄與寫入 SD 卡需要）')),
+    h('footer', { class: 'site' }, h('div', { class: 'wrap' }, svgEl(stageMark()),
+      h('span', {}, 'PENG! 數位戲台 · 電子雞開放架構平台', h('br'), '請用電腦版 Chrome 或 Edge 開啟（燒錄與寫入 SD 卡需要）'))),
     h('div', { class: 'toast-host', id: 'toast-host' }),
   );
   initLoupe();
@@ -280,9 +281,14 @@ export function why(pages, label = '為什麼要這樣？') {
   return el;
 }
 
+// 戲台說話：小標誌＋對話框（html 可含簡單標籤）
+export function say(html) {
+  return h('div', { class: 'say' }, svgEl(stageMark()), h('div', { class: 'bubble', html }));
+}
+
 // 一句話的必要提醒
 export function callout(kind, text) {
-  const ico = { warn: '⚠️', tip: '💡', ok: '✅', info: '👉' }[kind] || '👉';
+  const ico = { warn: '⚠️', tip: '💡', ok: '✅', info: '👉', swap: '🔁' }[kind] || '👉';
   return h('div', { class: `callout ${kind}` }, h('span', { class: 'ico' }, ico), h('span', { html: text }));
 }
 

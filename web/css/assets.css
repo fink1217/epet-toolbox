@@ -15,7 +15,7 @@
 .ck-title { font-size: 14px; color: var(--ink-2); padding-top: 3px; }
 .ck-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ck-chip { cursor: pointer; font-family: var(--font-body); }
-.ck-chip:hover { border-color: var(--yolk); }
+.ck-chip:hover { border-color: var(--accent); }
 .ck-warn summary { cursor: pointer; color: var(--red); }
 .ck-warn ul { margin: 6px 0 0; padding-left: 20px; color: var(--ink-2); }
 
@@ -31,7 +31,7 @@
 .gen-step-head { display: flex; align-items: center; gap: 10px; }
 .gen-step-head h3 { margin: 0; }
 .gen-n {
-  width: 30px; height: 30px; border-radius: 50%; background: var(--yolk); color: #2A1A00;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--bg);
   font: 400 17px/30px var(--font-display); text-align: center; flex: none;
 }
 .gen-two { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; }
@@ -46,10 +46,10 @@
 .stage-canvas { display: block; max-width: 100%; max-height: 460px; width: auto; height: auto; cursor: pointer; }
 .stage-inner.wand .stage-canvas { cursor: crosshair; }
 .stage-boxes { position: absolute; inset: 0; pointer-events: none; }
-.fbox { position: absolute; border: 2px dashed var(--teal); border-radius: 4px; }
+.fbox { position: absolute; border: 2px dashed var(--pcb); border-radius: 4px; }
 .fbox span {
   position: absolute; left: -2px; top: -2px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 4px 0 6px 0;
-  background: var(--teal); color: #fff; font: 500 12px/22px var(--font-body); text-align: center;
+  background: var(--pcb); color: #fff; font: 500 12px/22px var(--font-body); text-align: center;
 }
 .fbox.off { border-color: var(--muted); background: rgba(250, 246, 238, .72); }
 .fbox.off span { background: var(--muted); }
@@ -63,7 +63,7 @@
   position: absolute; inset: 0; display: flex; gap: 10px; align-items: center; justify-content: center;
   background: rgba(255, 253, 248, .78); border-radius: inherit; font-size: 15px; color: var(--ink-2); z-index: 2;
 }
-.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--yolk); animation: spin .8s linear infinite; }
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 來源縮圖列 */
@@ -71,7 +71,7 @@
 .src-strip:empty { display: none; }
 .src-item { position: relative; display: grid; justify-items: center; gap: 2px; }
 .src-pick { border: 2px solid var(--line); border-radius: 10px; padding: 0; cursor: pointer; overflow: hidden; line-height: 0; }
-.src-item.on .src-pick { border-color: var(--yolk); box-shadow: 0 0 0 3px var(--yolk-soft); }
+.src-item.on .src-pick { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .src-x {
   position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line-2);
   background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1; color: var(--ink-2);
@@ -80,10 +80,10 @@
 /* 動畫預覽 */
 .anim-stage { width: min(100%, 380px); margin: 0 auto; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); line-height: 0; }
 .anim-canvas { width: 100%; height: auto; cursor: pointer; }
-.anim-canvas:focus-visible { outline: 3px solid var(--yolk); outline-offset: -3px; }
+.anim-canvas:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .frame-strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 4px; }
 .frame-item { position: relative; flex: none; padding: 0; border: 2px solid var(--line); border-radius: 8px; cursor: pointer; line-height: 0; }
-.frame-item.on { border-color: var(--yolk); box-shadow: 0 0 0 3px var(--yolk-soft); }
+.frame-item.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .frame-item span { position: absolute; left: 3px; bottom: 3px; font: 500 11px/1 var(--font-body); color: var(--ink-2); background: rgba(255,255,255,.85); border-radius: 4px; padding: 2px 4px; }
 .nudge { display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; }
 .nudge .btn { padding: 0; height: 44px; }
@@ -97,9 +97,9 @@
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch-ui { flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--line-2); position: relative; transition: background .15s; }
 .switch-ui::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
-.switch input:checked + .switch-ui { background: var(--teal); }
+.switch input:checked + .switch-ui { background: var(--pcb); }
 .switch input:checked + .switch-ui::after { transform: translateX(16px); }
-.switch input:focus-visible + .switch-ui { outline: 3px solid var(--yolk); outline-offset: 2px; }
+.switch input:focus-visible + .switch-ui { outline: 3px solid var(--accent); outline-offset: 2px; }
 .btn[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
 
 /* 提示詞小抄 */

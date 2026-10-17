@@ -31,7 +31,7 @@ SD 卡根目錄/
 ```json
 {
   "format": 1,
-  "generator": "電子雞工具箱 0.1",
+  "generator": "PENG! 0.1",
   "screen": { "w": 172, "h": 320 },
   "anchor": { "x": 86, "y": 282 },
   "backgrounds": { "day": "bg/day.jpg" },

@@ -1,14 +1,15 @@
 // 「為什麼」繪本的插圖：每張都是 320×200 的小比喻圖。用水管、門鈴、公車這類日常東西講電路。
 import { resistor, diode, BAND, ecapTop, motorPart, motorModulePart, batteryPart } from './parts.js';
+import { stageMark, pixelActor } from './stage.js';
 
 const FONT = "font-family=\"'Noto Sans TC', system-ui, sans-serif\"";
-const INK = '#1E1F22';
-const MUTED = '#8A8F98';
-const YOLK = '#FFB020';
-const RED = '#D93F3F';
-const GREEN = '#23944F';
-const BLUE = '#2F6FDB';
-const TEAL = '#11807A';
+const INK = '#1B1A17';
+const MUTED = '#8A8377';
+const YOLK = '#C49A3C';
+const RED = '#B3392B';
+const GREEN = '#3A7A45';
+const BLUE = '#2F5F9E';
+const TEAL = '#2F6B55';
 const WATER = '#5FB3F0';
 
 const doc = (inner) => `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
@@ -50,14 +51,6 @@ const meter = (x, y, s = 1, reading = '') => `<g transform="translate(${x} ${y})
   <rect x="7" y="8" width="44" height="24" rx="3" fill="#C9E7C4"/>
   ${t(29, 25, reading, { size: 12, weight: 700 })}
   <circle cx="29" cy="58" r="14" fill="#2B2B2B"/><path d="M29 58 L 37 49" stroke="#fff" stroke-width="2.6"/>
-</g>`;
-const chick = (x, y, s = 1, mood = 'happy') => `<g transform="translate(${x} ${y}) scale(${s})">
-  <ellipse cx="0" cy="4" rx="22" ry="23" fill="#FFC93C"/><ellipse cx="0" cy="9" rx="14" ry="14" fill="#FFE08A"/>
-  ${mood === 'worry'
-    ? '<circle cx="-7" cy="-1" r="3.4" fill="#fff" stroke="#1E1F22" stroke-width="1.6"/><circle cx="7" cy="-1" r="3.4" fill="#fff" stroke="#1E1F22" stroke-width="1.6"/><circle cx="-7" cy="-1" r="1.4" fill="#1E1F22"/><circle cx="7" cy="-1" r="1.4" fill="#1E1F22"/>'
-    : '<path d="M-10 0 q3 -4 6 0 M4 0 q3 -4 6 0" stroke="#1E1F22" stroke-width="2.2" fill="none" stroke-linecap="round"/>'}
-  <path d="M-3 4 l3 4 l3 -4z" fill="#FF8A00"/>
-  <path d="M0 -18 q-3 -5 -1 -7 q1 3 4 1 q-1 5 -3 6z" fill="#FF9F0A"/>
 </g>`;
 
 // ── 準備 ──
@@ -107,8 +100,8 @@ export const tinning = () => doc(`
   <rect x="190" y="58" width="80" height="16" rx="8" fill="${RED}"/>
   <rect x="268" y="61" width="34" height="10" rx="5" fill="#DDE1E6" stroke="#8E959D"/>
   ${t(250, 110, '上錫後：一根針', { size: 12, color: GREEN, weight: 700 })}
-  <rect x="40" y="140" width="240" height="40" rx="10" fill="#FFF3D6"/>
-  ${t(160, 165, '剝 3mm → 扭一扭 → 上錫', { size: 13, color: '#6B4300', weight: 700 })}`);
+  <rect x="40" y="140" width="240" height="40" rx="10" fill="#F4EAD0"/>
+  ${t(160, 165, '剝 3mm → 扭一扭 → 上錫', { size: 13, color: '#6B5017', weight: 700 })}`);
 
 export const fluxPan = () => doc(`
   <ellipse cx="110" cy="120" rx="80" ry="22" fill="#4A4D55"/>
@@ -129,7 +122,7 @@ export const gpio = () => doc(`
   ${[0, 1, 2, 3].map((i) => `<rect x="104" y="${60 + i * 26}" width="10" height="10" fill="#F2C94C"/><rect x="206" y="${60 + i * 26}" width="10" height="10" fill="#F2C94C"/>`).join('')}`);
 
 export const flip = () => doc(`
-  <rect x="30" y="40" width="80" height="130" rx="14" fill="#1E1F22"/><rect x="38" y="50" width="64" height="108" rx="6" fill="#BFE7FF"/>
+  <rect x="30" y="40" width="80" height="130" rx="14" fill="#1B1A17"/><rect x="38" y="50" width="64" height="108" rx="6" fill="#BFE7FF"/>
   ${t(70, 190, '正面：螢幕', { size: 12, color: MUTED })}
   <path d="M 130 100 q 30 -40 60 0" stroke="${YOLK}" stroke-width="3" fill="none"/>${arrow(185, 92, 192, 102, YOLK, 3)}
   <rect x="210" y="40" width="80" height="130" rx="14" fill="#202326"/>
@@ -145,9 +138,9 @@ export const pinChoice = () => doc(`
     return `<rect x="114" y="${44 + i * 16}" width="10" height="10" fill="${used ? '#F2C94C' : '#6B5A24'}"/>
     ${t(104, 53 + i * 16, used ? `IO${i - 1}` : ['IO43', 'IO44', 'IO1'][i], { anchor: 'end', size: 11, color: used ? INK : MUTED, weight: used ? 700 : 400 })}`;
   }).join('')}
-  <rect x="214" y="90" width="96" height="62" rx="10" fill="#FFF3D6"/>
-  ${t(262, 114, '空著的腳', { size: 13, color: '#6B4300', weight: 700 })}
-  ${t(262, 136, '不跟螢幕、SD 搶', { size: 11, color: '#6B4300' })}`);
+  <rect x="214" y="90" width="96" height="62" rx="10" fill="#F4EAD0"/>
+  ${t(262, 114, '空著的腳', { size: 13, color: '#6B5017', weight: 700 })}
+  ${t(262, 136, '不跟螢幕、SD 搶', { size: 11, color: '#6B5017' })}`);
 
 // ── 小電路板 ──
 export const powerStrip = () => doc(`
@@ -293,7 +286,7 @@ export const sensitivity = () => doc(`
   ${t(100, 104, '10kΩ：一般', { size: 12, weight: 700 })}
   <g transform="translate(-10 60)">${resistor([40, 80], [180, 80], ['yellow', 'violet', 'orange', 'gold'], { body: 80, dia: 22 })}</g>
   ${t(100, 164, '47kΩ：輕摸也有反應', { size: 12, weight: 700, color: TEAL })}
-  ${chick(250, 110, 1.4)}`);
+  ${pixelActor(250, 138, 4.2, INK)}`);
 
 // ── 聲音 ──
 export const noDac = () => doc(`
@@ -311,7 +304,7 @@ export const pdm = () => doc(`
 export const lowpass = () => doc(`
   ${square(20, 90, 100, 40, 10, INK, 1.6)}
   ${arrow(126, 70, 150, 70, MUTED)}
-  <rect x="154" y="48" width="44" height="44" rx="8" fill="#FFE08A" stroke="#C99A2E"/>${t(176, 75, '海綿', { size: 11, weight: 700 })}
+  <rect x="154" y="48" width="44" height="44" rx="8" fill="#EAD7A4" stroke="#C49A3C"/>${t(176, 75, '海綿', { size: 11, weight: 700 })}
   ${arrow(202, 70, 222, 70, MUTED)}
   ${wave(226, 70, 80, 20, 1, BLUE)}
   ${t(160, 130, '220Ω ＋ 100nF = 低通濾波', { size: 14, weight: 700, color: TEAL })}
@@ -354,7 +347,7 @@ export const colorsMeaning = () => doc(`
 
 export const motorPolarity = () => doc(`
   <g transform="translate(40 30)">${motorPart().svg}</g>
-  <g transform="translate(190 30)">${motorPart().svg.replace('#D3322C', 'TMP').replace('#2F6FDB', '#D3322C').replace('TMP', '#2F6FDB')}</g>
+  <g transform="translate(190 30)">${motorPart().svg.replace('#D3322C', 'TMP').replace('#2F5F9E', '#D3322C').replace('TMP', '#2F5F9E')}</g>
   <path d="M 70 20 a 22 22 0 1 1 -4 0" stroke="${YOLK}" stroke-width="3" fill="none"/>
   <path d="M 230 20 a 22 22 0 1 0 4 0" stroke="${YOLK}" stroke-width="3" fill="none"/>
   ${t(160, 160, '接反只是轉的方向相反', { size: 14, weight: 700, color: TEAL })}
@@ -380,7 +373,7 @@ export const moduleVsBare = () => doc(`
   ${t(62, 138, '✓ 三條線就好', { size: 11.5, color: GREEN })}
   ${t(62, 156, '✓ 不容易接錯', { size: 11.5, color: GREEN })}
   ${t(62, 174, '✗ 比較大、比較貴', { size: 11.5, color: RED })}
-  <path d="M160 22 V 180" stroke="#ECE5D8" stroke-width="2" stroke-dasharray="4 5"/>
+  <path d="M160 22 V 180" stroke="#E4DCCB" stroke-width="2" stroke-dasharray="4 5"/>
   <g transform="translate(212 16) scale(0.8)">${motorPart().svg}</g>
   ${t(250, 114, '自己焊', { size: 15, weight: 700 })}
   ${t(250, 138, '✓ 小、便宜', { size: 11.5, color: GREEN })}
@@ -397,13 +390,13 @@ export const fsrInside = () => doc(`
 export const fsrHeat = () => doc(`
   <circle cx="90" cy="90" r="46" fill="#E9C46A" stroke="#B88A1B"/>
   <path d="M 70 60 q 10 10 0 20 q -10 10 0 20" stroke="${RED}" stroke-width="3" fill="none"/>
-  <rect x="160" y="70" width="40" height="40" rx="3" fill="#1E1F22"/>${t(180, 132, '排母', { size: 12 })}
+  <rect x="160" y="70" width="40" height="40" rx="3" fill="#1B1A17"/>${t(180, 132, '排母', { size: 12 })}
   ${t(260, 84, '✗ 直接燙', { size: 13, color: RED, weight: 700 })}${t(260, 108, '✓ 用排母插', { size: 13, color: GREEN, weight: 700 })}
   ${t(160, 182, '壞了也能直接換一片', { size: 12, color: MUTED })}`);
 
 export const ampMagnify = () => doc(`
   ${wave(20, 100, 90, 10, 1.5, BLUE)}
-  <path d="M 130 60 L 190 100 L 130 140 Z" fill="#FFF3D6" stroke="${YOLK}" stroke-width="2.5"/>${t(152, 106, '×8.5', { size: 12, weight: 700, color: '#C77700' })}
+  <path d="M 130 60 L 190 100 L 130 140 Z" fill="#F4EAD0" stroke="${YOLK}" stroke-width="2.5"/>${t(152, 106, '×8.5', { size: 12, weight: 700, color: '#C77700' })}
   ${wave(205, 100, 100, 40, 1.5, RED)}
   ${t(160, 182, 'ESP32 的訊號太小，推不動喇叭', { size: 12, color: MUTED })}`);
 
@@ -415,8 +408,8 @@ export const ampPower = () => doc(`
   ${t(160, 186, '喇叭不跟主板搶電，畫面才不會閃', { size: 12, color: MUTED })}`);
 
 export const ampVolume = () => doc(`
-  <circle cx="110" cy="100" r="46" fill="#2F6FDB"/><circle cx="110" cy="100" r="30" fill="#F4F4F0"/>
-  <path d="M110 76 V 100" stroke="#2F6FDB" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="110" cy="100" r="46" fill="#2F5F9E"/><circle cx="110" cy="100" r="30" fill="#F4F4F0"/>
+  <path d="M110 76 V 100" stroke="#2F5F9E" stroke-width="5" stroke-linecap="round"/>
   <path d="M 50 150 a 70 70 0 0 1 20 -100" stroke="${YOLK}" stroke-width="3" fill="none"/>${arrow(58, 66, 70, 50, YOLK, 3)}
   ${t(230, 90, '先轉到最小', { size: 15, weight: 700, color: TEAL })}${t(230, 116, '再慢慢調大', { size: 13, color: MUTED })}`);
 
@@ -499,5 +492,5 @@ export const chargeLed = () => doc(`
   ${t(160, 182, '插電池再插 USB：充電燈亮', { size: 13, weight: 700, color: TEAL })}`);
 
 export const allDone = () => doc(`
-  ${chick(160, 100, 2.4)}
+  ${stageMark({ box: { x: 90, y: 64, w: 140 }, color: INK, actor: true })}
   ${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="${40 + i * 48}" y="${24 + (i % 2) * 18}" width="8" height="14" rx="2" fill="${[YOLK, RED, BLUE, GREEN, TEAL, '#D6409F'][i]}" transform="rotate(${i * 20} ${44 + i * 48} ${30 + (i % 2) * 18})"/>`).join('')}`);

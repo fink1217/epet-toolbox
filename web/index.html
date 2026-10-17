@@ -3,30 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>電子雞工具箱</title>
-  <meta name="description" content="從焊接、做素材到燒錄，一步一步做出自己的電子雞。">
+  <title>PENG! 數位戲台</title>
+  <meta name="description" content="電子雞開放架構平台：台子自己焊、角色自己畫，按一下燒進去，角色就上台。">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="stylesheet" href="css/base.css">
   <style>
-    .hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; padding: 18px 0 30px; }
-    .hero .mascot { width: min(260px, 60vw); height: auto; margin: 0 auto; }
-    .hero p.lead { font-size: 18px; color: var(--ink-2); max-width: 30em; }
-    .pick { margin: 10px 0 36px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; padding: 26px 0 44px; }
+    .wordmark { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin: 18px 0 2px; font-size: clamp(44px, 7vw, 78px); font-weight: 900; letter-spacing: .02em; line-height: 1.05; }
+    .wordmark small { font-size: .42em; font-weight: 700; letter-spacing: .12em; }
+    .hero .en { font: 600 clamp(18px, 2.2vw, 24px) var(--font-display); color: var(--ink-2); letter-spacing: .06em; margin: 0 0 18px; }
+    .hero .lead { font-size: 18px; color: var(--ink); max-width: 28em; padding-left: 16px; border-left: 3px solid var(--ink); }
+    .hero-art { color: var(--ink); }
+    .hero-art .stage-mark { width: min(480px, 100%); height: auto; margin: 0 auto; }
+    .hero-art .actor { animation: bob 1.2s steps(1, end) infinite; }
+    @keyframes bob { 50% { transform: translateY(-3px); } }
+    @media (prefers-reduced-motion: reduce) { .hero-art .actor { animation: none; } }
+    .pick { margin: 10px 0 40px; }
     .pick .version-card { grid-template-columns: 150px 1fr; align-items: center; gap: 16px; }
     .pick .version-card svg { width: 150px; }
-    .tools { margin-top: 18px; }
-    .tool { display: grid; gap: 8px; text-decoration: none; color: inherit; transition: transform .12s; }
-    .tool:hover { transform: translateY(-2px); }
-    .tool .num { font-family: var(--font-display); font-size: 34px; color: var(--yolk); line-height: 1; }
-    .tool h3 { margin: 0; }
+    .tool { display: grid; gap: 6px; text-decoration: none; color: inherit; transition: transform .12s, border-color .12s; }
+    .tool:hover { transform: translateY(-2px); border-color: var(--ink-2); }
+    .tool .num { font: 900 15px var(--font-display); color: var(--accent); letter-spacing: .16em; }
+    .tool h3 { margin: 0; font-size: 24px; }
+    .tool .what { font-size: 14px; color: var(--muted); }
     .tool p { color: var(--ink-2); margin: 0; font-size: 15px; }
-    .flow { margin-top: 36px; }
+    .flow { margin-top: 44px; }
     .flow .figure { overflow-x: auto; }
     .flow .figure svg { min-width: 760px; }
     @media (max-width: 800px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero .art { order: -1; }
+      .hero { grid-template-columns: 1fr; gap: 12px; }
+      .hero-art { order: -1; }
+      .hero-art .stage-mark { width: min(300px, 80%); }
       .pick .version-card { grid-template-columns: 110px 1fr; }
       .pick .version-card svg { width: 110px; }
     }
@@ -36,37 +44,40 @@
   <main class="wrap">
     <section class="hero">
       <div>
-        <h1>做一隻會動、會叫、<br>會撒嬌的電子雞</h1>
-        <p class="lead">焊好電路、畫好角色、按一下燒進去。每一步都有圖照著做；想知道原理，再點開「為什麼」。</p>
+        <span class="stamp pill">電子雞開放架構平台</span>
+        <h1 class="wordmark">PENG!<small>數位戲台</small></h1>
+        <p class="en">Digital Stage</p>
+        <p class="lead">PENG! 就是戲台。台子你自己焊，角色你自己畫；按一下燒進去，角色就上台。</p>
+        <p class="muted">每一步都有圖照著做；想知道原理，再點開「為什麼」。</p>
       </div>
-      <div class="art" id="hero-art"></div>
+      <div class="hero-art" id="hero-art"></div>
     </section>
 
     <section class="pick">
-      <h2>先選你要做哪一台</h2>
+      <h2 class="sect"><span>先選你要搭哪一座台</span></h2>
       <div class="grid-2" id="versions"></div>
     </section>
 
     <section>
-      <h2>三個工具，照順序用</h2>
-      <div class="grid-3 tools">
+      <h2 class="sect"><span>三步：搭台、請角色、開演</span></h2>
+      <div class="grid-3">
         <a class="card tool" href="wiring.html">
-          <span class="num">①</span><h3>接線教學</h3>
+          <span class="num">壹・搭台</span><h3>接線教學</h3>
           <p>一步一張圖，把螢幕、馬達、喇叭、感壓片、電池焊起來。</p>
         </a>
         <a class="card tool" href="assets.html">
-          <span class="num">②</span><h3>素材生成器</h3>
+          <span class="num">貳・請角色</span><h3>素材生成器</h3>
           <p>把 AI 畫的角色、背景、音效丟進來，自動去背、對齊、整理好。</p>
         </a>
         <a class="card tool" href="deploy.html">
-          <span class="num">③</span><h3>寫入裝置</h3>
+          <span class="num">參・開演</span><h3>寫入裝置</h3>
           <p>插上 USB 一鍵刷韌體；選好 SD 卡一鍵打包素材。</p>
         </a>
       </div>
     </section>
 
     <section class="flow">
-      <h2>整套工具怎麼串起來</h2>
+      <h2 class="sect"><span>整套工具怎麼串起來</span></h2>
       <div class="figure" id="flow"></div>
       <div id="flow-why"></div>
     </section>
@@ -75,11 +86,11 @@
   <script type="module">
     import { mountShell, h, svgEl, getVersionId, setVersionId, why } from './js/core.js';
     import { VERSIONS, BOARDS } from './js/data/boards.js';
-    import { mascot } from './js/svg/mascot.js';
+    import { stageMark } from './js/svg/stage.js';
     import { productDevice, personalDevice, pipeline } from './js/svg/devices.js';
 
     mountShell('home');
-    document.getElementById('hero-art').append(svgEl(mascot({ mood: 'cheer' })));
+    document.getElementById('hero-art').append(svgEl(stageMark({ actor: true })));
 
     const art = { product: productDevice, personal: personalDevice };
     const box = document.getElementById('versions');
@@ -100,7 +111,7 @@
       {
         art: pipeline(),
         title: '資料只往一個方向流',
-        text: '<p>AI 圖 → 素材資料夾 → SD 卡 → 電子雞。每個工具只負責一段，前一段的輸出就是下一段的輸入。</p><p>出問題的時候，只要看是哪一段的輸出不對，不用整套翻。</p>',
+        text: '<p>AI 圖 → 素材資料夾 → SD 卡 → 戲台。每個工具只負責一段，前一段的輸出就是下一段的輸入。</p><p>出問題的時候，只要看是哪一段的輸出不對，不用整套翻。</p>',
       },
       {
         art: personalDevice(),
@@ -109,8 +120,8 @@
       },
       {
         art: productDevice(),
-        title: '兩台用同一套',
-        text: '<p>商品版和自玩版只差在「怎麼操作」：一個摸螢幕、一個轉旋鈕。其他零件、接法、素材全部一樣。</p><p>一樣的東西只做一次，維護的時候才不會改了這邊忘了那邊。</p>',
+        title: '台子不變，角色隨你換',
+        text: '<p>商品版和自玩版只差在「怎麼操作」：一個摸螢幕、一個轉旋鈕。其他零件、接法、素材全部一樣。</p><p>這就是「開放架構」：戲台搭好一次，角色、場景、音效都放在 SD 卡，想換誰上台就換誰。</p>',
       },
     ], '為什麼要分成這幾段？'));
   </script>

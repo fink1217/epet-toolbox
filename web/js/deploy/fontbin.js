@@ -1,4 +1,4 @@
-// font.bin：電子雞的點陣字型檔（規格見 docs/SD卡格式-v1.md）。
+// font.bin：戲台的點陣字型檔（規格見 docs/SD卡格式-v1.md）。
 // 純函式：只負責把字形資料排成位元組、以及反過來解析。畫字在 font.js。
 
 export const FONT_MAGIC = 'EPF1';

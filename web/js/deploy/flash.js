@@ -81,7 +81,7 @@ export function explainError(e) {
   if (e?.name === 'NotFoundError' || /No port selected/i.test(msg)) {
     return {
       title: '沒有選到裝置',
-      tips: ['清單是空的？換一條「能傳資料」的 USB 線（有些線只能充電）', '按住電子雞的 BOOT 鍵再插上 USB，放開後再按一次「連接」'],
+      tips: ['清單是空的？換一條「能傳資料」的 USB 線（有些線只能充電）', '按住主板的 BOOT 鍵再插上 USB，放開後再按一次「連接」'],
     };
   }
   if (e?.name === 'NetworkError' || e?.name === 'InvalidStateError' || /open|busy|in use/i.test(msg)) {
@@ -95,7 +95,7 @@ export function explainError(e) {
   }
   if (/timeout|Failed to connect|sync/i.test(msg) || e?.name === 'TimeoutError') {
     return {
-      title: '連上了，但電子雞沒有回應',
+      title: '連上了，但戲台沒有回應',
       tips: ['按住 BOOT 鍵 → 按一下 RST 鍵 → 放開 BOOT，讓它進入燒錄模式後再試', '還是不行就拔掉 USB，按住 BOOT 再插上'],
     };
   }

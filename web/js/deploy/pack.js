@@ -11,7 +11,7 @@ import { removeEntry, writeFile } from '../lib/fs.js';
 import { encodeQOI } from './qoi.js';
 import { collectChars, renderFont } from './font.js';
 
-export const GENERATOR = '電子雞工具箱 0.1';
+export const GENERATOR = 'PENG! 0.1';
 export const sizeDir = (s) => `${s.w}x${s.h}`;
 const pad3 = (i) => String(i).padStart(3, '0');
 

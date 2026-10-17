@@ -1,5 +1,6 @@
 // 主板排針圖：「背面朝上（看得到晶片）、USB 朝上」，左右兩排腳位直接取自 data/boards.js。
 import { WIRES } from '../data/boards.js';
+import { stageMark } from './stage.js';
 
 const FONT = "font-family=\"'Noto Sans TC', system-ui, sans-serif\"";
 const PITCH = 26;                 // 2.54mm 排針間距畫成 26px
@@ -80,14 +81,12 @@ export function boardLayer(board, { used = {}, focus = null, caption = true, fac
     const sy = y0 + 9.6 * MM;
     const sh = pcbH - 9.6 * MM - m;
     out.push(`<rect x="${x0 + m}" y="${sy}" width="${pcbW - m * 2}" height="${sh}" rx="10" fill="#1B2A3A"/>`);
-    out.push(`<rect x="${x0 + m + 6}" y="${sy + 6}" width="${pcbW - m * 2 - 12}" height="${sh - 12}" rx="7" fill="#BFE7FF"/>`);
-    out.push(`<rect x="${x0 + m + 6}" y="${sy + sh * 0.68}" width="${pcbW - m * 2 - 12}" height="${sh * 0.32 - 6}" fill="#A8E6A1"/>`);
-    const ccx = cx;
-    const ccy = sy + sh * 0.58;
-    out.push(`<ellipse cx="${ccx}" cy="${ccy}" rx="22" ry="24" fill="#FFC93C"/><ellipse cx="${ccx}" cy="${ccy + 5}" rx="14" ry="14" fill="#FFE08A"/>`
-      + `<circle cx="${ccx - 8}" cy="${ccy - 4}" r="2.8" fill="#1E1F22"/><circle cx="${ccx + 8}" cy="${ccy - 4}" r="2.8" fill="#1E1F22"/>`
-      + `<path d="M ${ccx - 4} ${ccy + 1} l 4 5 l 4 -5z" fill="#FF8A00"/>`);
-    out.push(`<text x="${cx}" y="${sy + 26}" text-anchor="middle" font-size="12" font-weight="700" fill="#1B2A3A" ${FONT}>螢幕</text>`);
+    // 螢幕裡是開機畫面：深色底＋戲台標誌
+    const iw = pcbW - m * 2 - 12;
+    out.push(`<rect x="${x0 + m + 6}" y="${sy + 6}" width="${iw}" height="${sh - 12}" rx="7" fill="#26272B"/>`);
+    const mw = iw * 0.72;
+    out.push(stageMark({ box: { x: cx - mw / 2, y: sy + sh * 0.52 - (mw * 190) / 480, w: mw }, color: '#F3EEE3' }));
+    out.push(`<text x="${cx}" y="${sy + 26}" text-anchor="middle" font-size="12" font-weight="700" fill="#F3EEE3" ${FONT}>螢幕</text>`);
   } else {
     // 背面：TF 卡槽、晶片
     const tfY = y0 + 9.4 * MM;

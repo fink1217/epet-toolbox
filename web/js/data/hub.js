@@ -20,11 +20,13 @@ export const HUB = {
     { id: 'R1', kind: 'resistor', name: '限流電阻', role: '限制 IO6 送出去的電流，保護主板的腳。',
       value: '1kΩ', bands: ['brown', 'black', 'red', 'gold'],
       pins: { a: [2, 4], b: [6, 4] }, step: 'hub-resistors' },
-    // pinout：平面朝自己、腳朝下時，由左到右的腳位。2SC1815 是 ECB（S8050 是 EBC，換料要改配置）。
+    // pinout：平面朝自己、腳朝下時，由左到右的腳位。2SC1815 是 ECB。
     // pins 依實際由左到右的順序寫；flat 是平面朝向（south＝朝第 9 列）。
+    // alt：換料版。S8050 插同樣三個孔，但中間那支是 B，所以 B、C 兩條錫橋也帶 alt 改道；電阻、二極體都不用換。
     { id: 'Q1', kind: 'to92', name: '電晶體（馬達開關）', role: 'IO6 只要給幾 mA 的小電流，就能開關馬達 80–120mA 的大電流。',
       value: '2SC1815', pinout: 'ECB', flat: 'south',
-      pins: { e: [5, 5], c: [6, 5], b: [7, 5] }, step: 'hub-transistor', only: 'bare' },
+      pins: { e: [5, 5], c: [6, 5], b: [7, 5] }, step: 'hub-transistor', only: 'bare',
+      alt: { value: 'S8050', pinout: 'EBC', pins: { e: [5, 5], b: [6, 5], c: [7, 5] } } },
     { id: 'D1', kind: 'diode', name: '二極體（洩壓閥）', role: '馬達斷電時會反衝出高電壓，從這裡繞回馬達自己消化，保護電晶體。',
       value: '1N4148',
       pins: { k: [8, 0], a: [8, 4] }, step: 'hub-diode', only: 'bare' },
@@ -52,11 +54,11 @@ export const HUB = {
     { net: 'IO6', path: [[1, 4], [2, 4]], step: 'hub-resistors' },
     { net: 'B', path: [[6, 3], [6, 4]], step: 'hub-resistors' },
     // 從 G5 接出去：裸馬達版繞到電晶體 B 腳（H6）；模組版接模組 IN 的落點（G6）。哪一步焊取決於配置。
-    { net: 'B', path: [[6, 4], [7, 4], [7, 5]], step: 'hub-transistor', only: 'bare' },
+    { net: 'B', path: [[6, 4], [7, 4], [7, 5]], step: 'hub-transistor', only: 'bare', alt: { path: [[6, 4], [6, 5]] } },
     { net: 'B', path: [[6, 4], [6, 5]], step: 'hub-resistors', only: 'module' },
     { net: 'GND', path: [[5, 5], [5, 8]], step: 'hub-transistor', only: 'bare' },
     // 集極 C 在中間（G6），往下繞第 7 列到馬達落點 J6，再分一支上去接二極體 I5
-    { net: 'C', path: [[6, 5], [6, 6], [9, 6], [9, 5]], step: 'hub-diode', only: 'bare' },
+    { net: 'C', path: [[6, 5], [6, 6], [9, 6], [9, 5]], step: 'hub-diode', only: 'bare', alt: { path: [[7, 5], [7, 6], [9, 6], [9, 5]] } },
     { net: 'C', path: [[8, 6], [8, 4]], step: 'hub-diode', only: 'bare' },
     { net: 'FSR', path: [[10, 3], [11, 3], [11, 4]], step: 'hub-fsr' },
     { net: 'IO7', path: [[13, 1], [13, 2]], step: 'hub-audio' },
@@ -109,6 +111,9 @@ export const HUB_NETS = {
   IO7: ['board-io7', 'R4.a'],
   AUD: ['R4.b', 'C2.a', 'amp-s'],
 };
+
+// 換料版：有 alt 的東西換成 alt 的內容（目前只有 Q1 換 S8050）。tools/check-hub.mjs 兩版都驗。
+export const withAlt = (x) => (x.alt ? { ...x, ...x.alt } : x);
 
 // 零件腳距（孔數）：用來檢查零件有沒有擺成實際插不進去的樣子
 export const LEAD_SPAN = { resistor: 4, diode: 4, ecap: 1, ccap: 1 };

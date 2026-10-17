@@ -18,6 +18,15 @@
 .todo b, .conn b { color: var(--ink); }
 .todo li { line-height: 1.6; }
 .callouts { display: grid; gap: 8px; }
+/* 換料框：哪顆料可以換、換了要改哪裡 */
+.callout.swap { background: var(--surface); border: 1.5px dashed var(--gold); color: var(--ink-2); }
+.callout.swap > span:last-child { flex: 1; min-width: 0; }
+.alt-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px; line-height: 1.45; }
+.alt-table th, .alt-table td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.alt-table thead th { color: var(--ink); border-bottom-color: var(--line-2); }
+.alt-table tbody th { font-weight: 500; color: var(--muted); white-space: nowrap; }
+.alt-table small { display: block; font-size: 12px; }
+.alt-table .diff { color: var(--accent); font-weight: 700; }
 .cta { margin-top: 18px; width: 100%; }
 
 /* 連線表 */
@@ -26,7 +35,7 @@
 .conn-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); }
 .conn-from { font-weight: 700; }
 .conn-arrow { color: var(--muted); text-align: center; }
-.conn-to { font-weight: 700; color: var(--teal); }
+.conn-to { font-weight: 700; color: var(--pcb); }
 
 /* 零件清點 */
 .prep h4 { margin: 4px 0 10px; font-size: 17px; }
@@ -49,13 +58,13 @@ dialog.zoom svg { width: 100%; height: auto; }
 /* ── 滑鼠提示：圖上的零件、落點、排針、孔 ── */
 .hover-tip {
   position: fixed; z-index: 70; max-width: 270px; pointer-events: none;
-  background: #1E1F22; color: #F3F4F6; border-radius: 12px; padding: 10px 12px;
+  background: var(--ink); color: #F3EEE3; border-radius: 12px; padding: 10px 12px;
   font-size: 13.5px; line-height: 1.55; box-shadow: var(--shadow-lg);
 }
 .hover-tip[hidden] { display: none; }
 .tip-title { font-weight: 700; font-size: 14.5px; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
-.tip-id { background: var(--yolk); color: #2A1A00; border-radius: 6px; padding: 0 7px; font-size: 13px; }
-.tip-where { color: #FFD27A; }
+.tip-id { background: var(--gold); color: var(--ink); border-radius: 6px; padding: 0 7px; font-size: 13px; }
+.tip-where { color: #E9C77A; }
 .tip-role { color: #B8BEC6; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
 .tip-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #fff; flex: none; }
 
@@ -69,8 +78,8 @@ dialog.zoom [data-part], dialog.zoom [data-pad], dialog.zoom [data-pin] { cursor
 @keyframes ring { 50% { stroke-opacity: .45; fill-opacity: .4; } }
 
 /* 文字裡可以指的代號：R1、C4… */
-.ref { border-bottom: 1.5px dashed #C99A2E; cursor: help; }
-.ref:hover { background: var(--yolk-soft); border-radius: 4px; }
+.ref { border-bottom: 1.5px dashed var(--gold); cursor: help; }
+.ref:hover { background: var(--gold-soft); border-radius: 4px; }
 
 /* 組合圖的電線不吃滑鼠事件：讓底下的落點、排針收得到提示 */
 .step-figure .wire, dialog.zoom .wire, .step-figure .hub-labels, dialog.zoom .hub-labels { pointer-events: none; }

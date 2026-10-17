@@ -32,23 +32,16 @@
   content: counter(s); width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center;
   background: var(--line); color: var(--ink-2); font-size: 12px;
 }
-.task-steps li.now { color: var(--ink); border-color: var(--yolk-2); background: var(--yolk-soft); }
-.task-steps li.now::before { background: var(--yolk); color: #2A1A00; }
+.task-steps li.now { color: var(--ink); border-color: var(--accent-2); background: var(--accent-soft); }
+.task-steps li.now::before { background: var(--accent); color: var(--bg); }
 .task-steps li.done { color: var(--green); }
 .task-steps li.done::before { content: '✓'; background: var(--green-soft); color: var(--green); }
 
 .wide { width: 100%; }
 
-/* 孵蛋 */
-.hatch { display: grid; place-items: center; }
-.hatch svg { width: min(160px, 50%); height: auto; }
-.egg-wobble { animation: wobble 1.1s ease-in-out infinite; }
-@keyframes wobble {
-  0%, 100% { transform: rotate(0); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
-}
-@media (prefers-reduced-motion: reduce) { .egg-wobble { animation: none; } }
+/* 開幕：燒錄進度的布幕（deploy-art.js 的 curtain） */
+.stage-art { display: grid; place-items: center; }
+.stage-art svg { width: min(220px, 60%); height: auto; color: var(--ink); }
 
 /* 檢查清單 */
 .checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -65,8 +58,8 @@ h4.sub { font-size: 16px; margin: 4px 0 0; }
   display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; padding: 9px 12px;
   border: 1px solid var(--line); border-radius: 12px; background: var(--paper); cursor: pointer;
 }
-.size input { grid-row: span 2; accent-color: var(--yolk); width: 18px; height: 18px; }
-.size:has(input:checked) { border-color: var(--yolk); background: var(--yolk-soft); }
+.size input { grid-row: span 2; accent-color: var(--accent); width: 18px; height: 18px; }
+.size:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 420px) { .sizes { grid-template-columns: 1fr; } }
 
 /* 完成數字 */

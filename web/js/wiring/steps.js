@@ -7,7 +7,6 @@ import { icon, ampModule, imuModule, ec11Module, motorPart, motorModulePart, fsr
 import { svgDoc, place, curvePath, roundedPath, wire, label, text } from './compose.js';
 import * as A from '../svg/why-art.js';
 import { mirrorX } from '../svg/mirror.js';
-import { mascot } from '../svg/mascot.js';
 import { h, svgEl } from '../core.js';
 
 const b = (s) => `<b>${s}</b>`;
@@ -81,12 +80,30 @@ function traceLine(traces, ctx) {
     if (last && hn(last[last.length - 1]) === hn(t.path[0])) last.push(...t.path.slice(1));
     else paths.push([...t.path]);
   }
-  const say = (path) => path.filter((p, i) => i === 0 || i === path.length - 1 || !collinear(path[i - 1], p, path[i + 1])).map(hb).join(' → ');
-  return [...byNet].map(([net, paths]) => `<b class="ref" data-net="${net}">${netName(net, ctx)}</b>：${paths.map(say).join('、')}`).join('；');
+  return [...byNet].map(([net, paths]) => `<b class="ref" data-net="${net}">${netName(net, ctx)}</b>：${paths.map(route).join('、')}`).join('；');
 }
 
 // 中間點跟前後在同一直線上（只是路過，不用特別講）
 const collinear = (a, m, c) => (a[0] === m[0] && m[0] === c[0]) || (a[1] === m[1] && m[1] === c[1]);
+// 錫橋路線只講起點、轉角、終點
+const route = (path, sep = ' → ') => path.filter((p, i) => i === 0 || i === path.length - 1 || !collinear(path[i - 1], p, path[i + 1])).map(hb).join(sep);
+
+// 換料框：Q1 的 alt（S8050）插同樣三個孔，B、C 兩條錫橋改道。全部從 hub.js 讀，check-hub 驗過換料後的電路。
+function altBox() {
+  const alt = Q1.alt;
+  const [tb, tc] = ['B', 'C'].map((net) => HUB.traces.find((t) => t.net === net && t.alt));
+  const same = ['R1', 'R2', 'D1'].map((id) => HUB.parts.find((p) => p.id === id));
+  const row = (name, now, then) => `<tr><th>${name}</th><td>${now}</td><td class="diff">${then}</td></tr>`;
+  const path = (t) => route(t.path, '→<wbr>');
+  return `<b>手上是 ${alt.value} 也可以用</b>：兩顆都是 NPN，但 ${alt.value} 中間那支是 ${alt.pinout[1]}（${Q1.value} 是 ${Q1.pinout[1]}），B、C 兩條錫橋要改道。`
+    + `<table class="alt-table"><thead><tr><th></th><th>${Q1.value}</th><th>${alt.value}</th></tr></thead><tbody>`
+    + row('左到右', Q1.pinout.split('').join(' '), alt.pinout.split('').join(' '))
+    + row('B 錫橋<small>這一步</small>', path(tb), path(tb.alt))
+    + row('C 錫橋<small>下一步</small>', path(tc), path(tc.alt))
+    + `<tr><th>${same.map((p) => p.id).join('、')}</th><td colspan="2">${same.map((p) => p.value).join('、')}，都不用換</td></tr>`
+    + '</tbody></table>'
+    + '少數廠牌腳位不同，插之前用電表確認：二極體檔紅棒碰中間那支、黑棒碰兩邊，都讀到約 0.6V，中間就是 B。';
+}
 
 // 錫橋經過、之後還要插線的孔
 function padHolesIn(traces, ctx) {
@@ -942,7 +959,7 @@ export const STEPS = [
     todo: (ctx) => hubTodos('hub-transistor', ctx),
     callouts: () => [
       ['warn', `<b>平面朝${FLAT_ZH[Q1.flat]}</b>：從左到右是 ${Q1.pinout.split('').join('、')}。插反了馬達會很弱，或電晶體發燙。`],
-      ['info', `${Q1.value} 的<b>中間那支是 ${Q1.pinout[1]}</b>。別的型號（例如 S8050 是 E、B、C）中間那支不一樣，不能直接照這張圖換料。`],
+      ['swap', altBox()],
     ],
     why: [
       { art: A.faucet(), title: '小水龍頭控制大水管', text: '<p>IO6 只能給幾 mA，馬達要 80–120mA。</p><p>電晶體的基極（B）流一點點電流，就能打開集極（C）到射極（E）的大電流。</p>' },

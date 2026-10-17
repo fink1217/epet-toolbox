@@ -1,13 +1,16 @@
-// 「寫入裝置」頁的插圖：兩張主圖、孵蛋進度、繪本插圖。全部回傳 SVG 字串。
+// 「寫入裝置」頁的插圖：兩張主圖、開幕進度、繪本插圖。全部回傳 SVG 字串。
+import { stageMark, pixelActor, STAGE_WINDOW } from './stage.js';
 
-const INK = '#1E1F22';
-const MUTED = '#8A8F98';
-const LINE = '#DDD3C2';
-const YOLK = '#FFB020';
-const TEAL = '#11807A';
-const RED = '#D93F3F';
-const T = (x, y, _unused, text, { size = 13, fill = INK, anchor = 'middle', display = false, weight = 400 } = {}) =>
-  `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${display ? 'Huninn, ' : ''}Noto Sans TC, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}">${text}</text>`;
+const INK = '#1B1A17';
+const MUTED = '#8A8377';
+const LINE = '#CFC5B1';
+const YOLK = '#C49A3C';
+const TEAL = '#2F6B55';
+const RED = '#B3392B';
+const ACCENT = '#A63A2B';
+const GOLD = YOLK;
+const T = (x, y, _unused, text, { size = 13, fill = INK, anchor = 'middle', display = false, weight = display ? 700 : 400 } = {}) =>
+  `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${display ? 'Noto Serif TC, ' : ''}Noto Sans TC, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}">${text}</text>`;
 const svg = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 
 // 小小的 ESP32 主板（背面朝上）
@@ -25,15 +28,15 @@ const board = (x, y, s = 1) => `
 const laptop = (x, y) => `
   <g transform="translate(${x} ${y})">
     <rect x="10" y="0" width="120" height="78" rx="8" fill="#FFFFFF" stroke="${INK}" stroke-width="2.4"/>
-    <rect x="18" y="8" width="104" height="62" rx="4" fill="#FFF3D6"/>
-    <path d="M0 84 h140 l-8 10 h-124z" fill="#ECE5D8" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
+    <rect x="18" y="8" width="104" height="62" rx="4" fill="#F4EAD0"/>
+    <path d="M0 84 h140 l-8 10 h-124z" fill="#E4DCCB" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
   </g>`;
 
 // ── 主圖 ──
 export function flashHero() {
   return svg(320, 170, `
     ${laptop(14, 30)}
-    ${T(84, 74, '', '{ 程式 }', { size: 15, fill: '#6B4300', display: true })}
+    ${T(84, 74, '', '{ 程式 }', { size: 15, fill: '#6B5017', display: true })}
     <path d="M154 120 C 190 120, 200 70, 236 70" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
     <path d="M154 120 C 190 120, 200 70, 236 70" fill="none" stroke="${YOLK}" stroke-width="2.2" stroke-dasharray="4 7" stroke-linecap="round">
       <animate attributeName="stroke-dashoffset" from="22" to="0" dur="0.8s" repeatCount="indefinite"/>
@@ -56,60 +59,43 @@ export function sdHero() {
     </g>
     <path d="M150 88 h26" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
     <path d="M170 82 l8 6 l-8 6" fill="none" stroke="${LINE}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${folder(190, 22, 'pet', '#FFE08A')}
-    ${folder(252, 66, '172x320', '#E1F4F2')}
-    ${folder(190, 110, 'sfx', '#E8F0FD')}
+    ${folder(190, 22, 'pet', '#EAD7A4')}
+    ${folder(252, 66, '172x320', '#E3EDE7')}
+    ${folder(190, 110, 'sfx', '#E6EDF6')}
     <path d="M218 64 v28 h32" fill="none" stroke="${LINE}" stroke-width="2"/>
     <path d="M206 64 v52" fill="none" stroke="${LINE}" stroke-width="2"/>
   `);
 }
 
-// ── 孵蛋：燒錄進度 0..1 ──
-export function egg(progress = 0) {
+// ── 開幕：燒錄進度 0..1。布幕從中間往兩邊拉開，燒完角色登台 ──
+let seq = 0;
+const sparkle = (x, y, r) => `<path d="M${x} ${y - r} L${x + r * 0.25} ${y - r * 0.25} L${x + r} ${y} L${x + r * 0.25} ${y + r * 0.25} L${x} ${y + r} L${x - r * 0.25} ${y + r * 0.25} L${x - r} ${y} L${x - r * 0.25} ${y - r * 0.25}Z" fill="${GOLD}"/>`;
+export function curtain(progress = 0) {
   const p = Math.max(0, Math.min(1, progress));
-  const crack1 = p > 0.25 ? `<path d="M52 70 l8 -8 l6 8 l8 -10" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>` : '';
-  const crack2 = p > 0.55 ? `<path d="M40 86 l10 -6 l8 7 l10 -8 l10 6 l10 -5" fill="none" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>` : '';
-  if (p > 0.8 && p < 1) {
-    // 快好了：上半殼掀開，小雞探頭偷看
-    return svg(140, 140, `
-      <ellipse cx="70" cy="128" rx="40" ry="6" fill="${INK}" opacity=".08"/>
-      <g class="egg-wobble" style="transform-origin:70px 120px">
-        <ellipse cx="70" cy="66" rx="27" ry="28" fill="#FFC93C"/>
-        <circle cx="61" cy="62" r="3.4" fill="${INK}"/><circle cx="79" cy="62" r="3.4" fill="${INK}"/>
-        <circle cx="62.2" cy="60.8" r="1.1" fill="#fff"/><circle cx="80.2" cy="60.8" r="1.1" fill="#fff"/>
-        <path d="M66 69 l4 5 l4 -5z" fill="#FF8A00"/>
-        <path d="M44 46 q26 -30 52 0 l-7 5 l-6 -6 l-7 6 l-6 -6 l-7 6 l-6 -6 l-7 6z" fill="#FFFDF8" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round" transform="rotate(-12 70 40)"/>
-        <path d="M31 78 l9 -7 l8 7 l9 -8 l8 7 l9 -8 l8 7 l9 -8 l8 7 l9 -6 C 114 100, 100 124, 70 124 C 40 124, 26 100, 31 78z" fill="#FFFDF8" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>
-      </g>
-    `);
-  }
-  if (p >= 1) {
-    return svg(140, 140, `
-      <ellipse cx="70" cy="128" rx="40" ry="6" fill="${INK}" opacity=".08"/>
-      <path d="M30 96 q40 40 80 0 l-8 -10 l-10 8 l-10 -9 l-12 9 l-10 -9 l-10 8 l-10 -8z" fill="#FFFDF8" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
-      <ellipse cx="70" cy="66" rx="30" ry="32" fill="#FFC93C"/>
-      <path d="M58 58 q4 -5 8 0 M74 58 q4 -5 8 0" stroke="${INK}" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <path d="M66 66 l4 5 l4 -5z" fill="#FF8A00"/>
-      <path d="M70 34 q-4 -6 -1 -9 q2 4 5 1 q-1 6 -4 8z" fill="#FF9F0A"/>
-      <path d="M24 40 l-8 -6 M22 56 l-10 0 M116 40 l8 -6 M118 56 l10 0" stroke="${YOLK}" stroke-width="3" stroke-linecap="round"/>
-    `);
-  }
-  return svg(140, 140, `
-    <ellipse cx="70" cy="128" rx="40" ry="6" fill="${INK}" opacity=".08"/>
-    <g class="egg-wobble" style="transform-origin:70px 120px">
-      <path d="M70 18 C 38 18, 26 70, 30 92 C 34 116, 52 124, 70 124 C 88 124, 106 116, 110 92 C 114 70, 102 18, 70 18z" fill="#FFFDF8" stroke="${INK}" stroke-width="2.6"/>
-      <ellipse cx="54" cy="46" rx="6" ry="10" fill="#fff" opacity=".9"/>
-      ${crack1}${crack2}
+  const { x, y, w, h } = STAGE_WINDOW;
+  const open = 8 + (w / 2 - 8) * (1 - p);   // 每片布幕的寬度：全開時收成 8px 的一束
+  const folds = (x0, width) => Array.from({ length: Math.floor(width / 6) }, (_, i) =>
+    `<path d="M${(x0 + 3 + i * 6).toFixed(1)} ${y + 6} V${y + h}" stroke="#7E2418" stroke-width="1.2" opacity=".55"/>`).join('');
+  const s = w / 10;   // 上緣垂幔：10 個往下彎的半圓
+  const valance = `M${x} ${y} H${x + w} V${y + 5}${` a${s / 2} 3 0 0 1 -${s} 0`.repeat(10)}Z`;
+  const id = `curtain-${++seq}`;
+  const extra = `
+    <defs><clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5"/></clipPath></defs>
+    <g clip-path="url(#${id})">
+      <rect x="${x}" y="${y}" width="${open}" height="${h}" fill="${ACCENT}"/>${folds(x, open)}
+      <rect x="${x + w - open}" y="${y}" width="${open}" height="${h}" fill="${ACCENT}"/>${folds(x + w - open, open)}
+      <path d="${valance}" fill="#7E2418"/>
     </g>
-  `);
+    ${p >= 1 ? sparkle(x + 24, y + 22, 5) + sparkle(x + w - 22, y + 18, 6) + sparkle(x + w - 34, y + 34, 3.5) : ''}`;
+  return stageMark({ actor: true, extra, color: INK, label: `開幕進度 ${Math.round(p * 100)}%` });
 }
 
 // ── 刷韌體的繪本 ──
 export function firmwareArt() {
   return svg(320, 180, `
     ${laptop(10, 40)}
-    ${T(80, 70, '', '我是電子雞', { size: 12, fill: '#6B4300' })}
-    ${T(80, 88, '', '的大腦', { size: 12, fill: '#6B4300' })}
+    ${T(80, 70, '', '我是戲台', { size: 12, fill: '#6B5017' })}
+    ${T(80, 88, '', '的後台', { size: 12, fill: '#6B5017' })}
     <path d="M160 90 h40" stroke="${YOLK}" stroke-width="4" stroke-linecap="round"/>
     <path d="M194 82 l10 8 l-10 8" fill="none" stroke="${YOLK}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     ${board(222, 40)}
@@ -123,9 +109,9 @@ export function mergedBinArt() {
     ${T(80, y + h / 2 - 2, '', label, { size: 12 })}
     ${T(80, y + h / 2 + 12, '', sub, { size: 9.5, fill: MUTED })}`;
   return svg(320, 180, `
-    ${blk(12, 40, '開機程式', 'bootloader', '#FFF3D6')}
-    ${blk(58, 40, '分割表', '哪段放什麼', '#E1F4F2')}
-    ${blk(104, 64, '電子雞程式', 'app', '#E8F0FD')}
+    ${blk(12, 40, '開機程式', 'bootloader', '#F4EAD0')}
+    ${blk(58, 40, '分割表', '哪段放什麼', '#E3EDE7')}
+    ${blk(104, 64, '戲台程式', 'app', '#E6EDF6')}
     <path d="M152 88 h34" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
     <path d="M180 80 l9 8 l-9 8" fill="none" stroke="${LINE}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     <rect x="200" y="30" width="100" height="116" rx="10" fill="#FFFFFF" stroke="${INK}" stroke-width="2.4"/>
@@ -155,12 +141,12 @@ export function browserArt() {
   return svg(320, 180, `
     <rect x="20" y="16" width="280" height="148" rx="12" fill="#FFFFFF" stroke="${INK}" stroke-width="2.4"/>
     <path d="M20 44 h280" stroke="${LINE}" stroke-width="2"/>
-    <circle cx="38" cy="30" r="4" fill="${RED}"/><circle cx="52" cy="30" r="4" fill="${YOLK}"/><circle cx="66" cy="30" r="4" fill="#23944F"/>
-    <rect x="86" y="23" width="196" height="14" rx="7" fill="#FAF6EE"/>
+    <circle cx="38" cy="30" r="4" fill="${RED}"/><circle cx="52" cy="30" r="4" fill="${YOLK}"/><circle cx="66" cy="30" r="4" fill="#3A7A45"/>
+    <rect x="86" y="23" width="196" height="14" rx="7" fill="#F9F5EC"/>
     ${T(184, 34, '', 'https://…/deploy.html', { size: 9.5, fill: MUTED })}
-    <rect x="60" y="62" width="200" height="82" rx="10" fill="#FAF6EE" stroke="${LINE}" stroke-width="2"/>
+    <rect x="60" y="62" width="200" height="82" rx="10" fill="#F9F5EC" stroke="${LINE}" stroke-width="2"/>
     ${T(160, 86, '', '網站想要連接序列埠', { size: 12 })}
-    <rect x="80" y="96" width="160" height="20" rx="4" fill="#FFF3D6" stroke="${YOLK}"/>
+    <rect x="80" y="96" width="160" height="20" rx="4" fill="#F4EAD0" stroke="${YOLK}"/>
     ${T(160, 110, '', 'USB JTAG/serial (COM5)', { size: 10.5 })}
     <rect x="196" y="122" width="52" height="16" rx="8" fill="${INK}"/>
     ${T(222, 134, '', '連線', { size: 10, fill: '#fff' })}
@@ -172,7 +158,7 @@ export function sizeFoldersArt() {
   // 依實際解析度等比例畫：320x480 高 110，其餘照比例
   const k = 110 / 480;
   const scr = (x, w, h, label) => `
-    <rect x="${x}" y="${150 - h * k}" width="${w * k}" height="${h * k}" rx="5" fill="#1E1F22"/>
+    <rect x="${x}" y="${150 - h * k}" width="${w * k}" height="${h * k}" rx="5" fill="#1B1A17"/>
     <rect x="${x + 3}" y="${153 - h * k}" width="${w * k - 6}" height="${h * k - 6}" rx="3" fill="#BFE7FF"/>
     ${T(x + (w * k) / 2, 168, '', label, { size: 10.5 })}`;
   return svg(320, 180, `
@@ -185,16 +171,16 @@ export function sizeFoldersArt() {
 
 export function englishNamesArt() {
   return svg(320, 180, `
-    <rect x="16" y="30" width="130" height="120" rx="10" fill="#FDECEC"/>
+    <rect x="16" y="30" width="130" height="120" rx="10" fill="#F7E3DE"/>
     ${T(81, 56, '', '中文檔名', { size: 13, display: true })}
     ${T(81, 86, '', '待機/001.png', { size: 12 })}
     ${T(81, 110, '', '→ ???/001.png', { size: 12, fill: RED })}
     ${T(81, 136, '', 'ESP32 可能讀不到', { size: 10.5, fill: RED })}
-    <rect x="174" y="30" width="130" height="120" rx="10" fill="#E5F5EA"/>
+    <rect x="174" y="30" width="130" height="120" rx="10" fill="#E5F0E3"/>
     ${T(239, 56, '', '英文檔名', { size: 13, display: true })}
     ${T(239, 86, '', 'anim/idle/000.qoi', { size: 11.5 })}
-    ${T(239, 110, '', '→ 一定讀得到', { size: 12, fill: '#23944F' })}
-    ${T(239, 136, '', '中文只留在你的電腦', { size: 10.5, fill: '#23944F' })}
+    ${T(239, 110, '', '→ 一定讀得到', { size: 12, fill: '#3A7A45' })}
+    ${T(239, 136, '', '中文只留在你的電腦', { size: 10.5, fill: '#3A7A45' })}
   `);
 }
 
@@ -208,7 +194,7 @@ export function formatsArt() {
     ${col(10, 'JPEG', '最小、解得快', '沒有透明 → 背景', TEAL)}
     <rect x="26" y="58" width="60" height="50" rx="4" fill="#BFE7FF"/><rect x="26" y="90" width="60" height="18" fill="#A8E6A1"/>
     ${col(114, 'QOI', '解得快、有透明', '→ 角色、圖示', YOLK)}
-    <rect x="130" y="58" width="60" height="50" rx="4" fill="#EEE"/><circle cx="160" cy="84" r="16" fill="#FFC93C"/>
+    <rect x="130" y="58" width="60" height="50" rx="4" fill="#EEE"/>${pixelActor(160, 100, 2.8, INK)}
     ${col(218, 'PNG', '有透明但解很慢', '只當母檔', LINE)}
     <rect x="234" y="58" width="60" height="50" rx="4" fill="#EEE"/>
     ${T(264, 90, '', '⏳', { size: 22 })}
@@ -217,18 +203,16 @@ export function formatsArt() {
 
 export function anchorArt() {
   return svg(320, 180, `
-    <rect x="20" y="14" width="150" height="150" rx="8" fill="#FAF6EE" stroke="${LINE}" stroke-width="2"/>
-    <ellipse cx="95" cy="98" rx="28" ry="30" fill="#FFC93C"/>
-    <circle cx="86" cy="90" r="3" fill="${INK}"/><circle cx="104" cy="90" r="3" fill="${INK}"/>
-    <path d="M91 98 l4 5 l4 -5z" fill="#FF8A00"/>
-    <rect x="67" y="68" width="56" height="60" fill="none" stroke="${TEAL}" stroke-width="2" stroke-dasharray="5 4"/>
+    <rect x="20" y="14" width="150" height="150" rx="8" fill="#F9F5EC" stroke="${LINE}" stroke-width="2"/>
+    ${pixelActor(95, 128, 4.6, INK)}
+    <rect x="67" y="82" width="56" height="46" fill="none" stroke="${TEAL}" stroke-width="2" stroke-dasharray="5 4"/>
     <path d="M95 128 H69" stroke="${INK}" stroke-width="1.6" marker-end="url(#ah)"/>
-    <path d="M52 128 V70" stroke="${INK}" stroke-width="1.6" marker-end="url(#ah)"/>
-    <path d="M47 68 h20 M47 128 h20" stroke="${MUTED}" stroke-width="1" stroke-dasharray="2 2"/>
+    <path d="M52 128 V84" stroke="${INK}" stroke-width="1.6" marker-end="url(#ah)"/>
+    <path d="M47 82 h20 M47 128 h20" stroke="${MUTED}" stroke-width="1" stroke-dasharray="2 2"/>
     <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="${INK}"/></marker></defs>
     <circle cx="95" cy="128" r="5" fill="${RED}"/>
     ${T(82, 144, '', 'dx', { size: 11 })}
-    ${T(40, 102, '', 'dy', { size: 11 })}
+    ${T(40, 109, '', 'dy', { size: 11 })}
     ${T(95, 158, '', 'anchor（腳底）', { size: 10.5, fill: RED })}
     ${T(246, 70, '', '角色要走路？', { size: 13, display: true })}
     ${T(246, 94, '', '只改 anchor', { size: 12, fill: TEAL })}
@@ -239,12 +223,12 @@ export function anchorArt() {
 
 export function fontSubsetArt(subsetKB = 16) {
   return svg(320, 180, `
-    <rect x="16" y="24" width="120" height="136" rx="8" fill="#E8F0FD" stroke="${INK}" stroke-width="2"/>
-    ${Array.from({ length: 8 }, (_, i) => `<path d="M30 ${42 + i * 12} h92" stroke="#B9CCF0" stroke-width="5" stroke-linecap="round"/>`).join('')}
+    <rect x="16" y="24" width="120" height="136" rx="8" fill="#E6EDF6" stroke="${INK}" stroke-width="2"/>
+    ${Array.from({ length: 8 }, (_, i) => `<path d="M30 ${42 + i * 12} h92" stroke="#C5D3E6" stroke-width="5" stroke-linecap="round"/>`).join('')}
     ${T(76, 150, '', '完整繁中字型 571 KB', { size: 10.5 })}
     <path d="M150 92 h28" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
     <path d="M172 84 l9 8 l-9 8" fill="none" stroke="${LINE}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="196" y="54" width="108" height="76" rx="8" fill="#FFF3D6" stroke="${YOLK}" stroke-width="2"/>
+    <rect x="196" y="54" width="108" height="76" rx="8" fill="#F4EAD0" stroke="${YOLK}" stroke-width="2"/>
     ${T(250, 86, '', '餵食 玩耍', { size: 15, display: true })}
     ${T(250, 108, '', '睡覺 狀態…', { size: 15, display: true })}
     ${T(250, 150, '', `只收用到的字 ≈ ${subsetKB} KB`, { size: 10.5, fill: TEAL })}
@@ -259,7 +243,7 @@ export function audioArt() {
   };
   return svg(320, 180, `
     ${wave(16, 54, 120, 16, 60, TEAL)}
-    ${wave(16, 96, 120, 14, 60, '#2F6FDB')}
+    ${wave(16, 96, 120, 14, 60, '#2F5F9E')}
     ${T(76, 136, '', '44100 Hz・立體聲', { size: 11 })}
     <path d="M150 76 h28" stroke="${LINE}" stroke-width="3" stroke-linecap="round"/>
     <path d="M172 68 l9 8 l-9 8" fill="none" stroke="${LINE}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
