@@ -6,7 +6,7 @@ import { stageMark } from './svg/stage.js';
 // 用 JS 插入樣式表，而不是在 CSS 裡 @import：@import 會讓整頁的程式等 Google 字型下載完，
 // 學校網路慢或連不到 Google 時頁面會卡住。現在字型慢慢來，頁面先用系統字型照常運作。
 // Noto Sans TC 不能拿掉：寫入裝置頁用它畫點陣字（deploy/font.js）。
-const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap';
+const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&family=Chakra+Petch:wght@700&display=swap';
 // 樣式表載完（或失敗、逾時）時完成；需要精確字型的功能（打包點陣字）要先等它
 export const fontsReady = new Promise((resolve) => {
   for (const href of ['https://fonts.googleapis.com', 'https://fonts.gstatic.com']) {

@@ -139,6 +139,14 @@ function hubTodos(step, ctx, pre = []) {
   return todo;
 }
 
+// 換料提醒：這一步的錫橋換料版要改道（完整對照在電晶體那一步的換料框）
+function altTip(step) {
+  const t = HUB.traces.find((x) => x.step === step && x.alt);
+  return t
+    ? ['swap', `<b>用 ${Q1.alt.value} 的話</b>：${t.net} 錫橋改從 ${hb(t.alt.path[0])} 出發，走 ${route(t.alt.path)}，不是圖上的 ${route(t.path)}。`]
+    : null;
+}
+
 function padTip(step, ctx) {
   const holes = padHolesIn(HUB.traces.filter((t) => t.step === step && included(t, ctx.features)), ctx);
   return holes.length
@@ -977,6 +985,7 @@ export const STEPS = [
       return [
         ['warn', `${pref('D1')} 的<b>黑色色帶插 ${hb(d.pins.k)}</b>（接 3V3 軌）。插反的話，馬達一啟動 3V3 就短路。`],
         padTip('hub-diode', ctx),
+        altTip('hub-diode'),
       ].filter(Boolean);
     },
     why: [
