@@ -11,8 +11,15 @@ document.addEventListener('paste', (e) => {
   if (files.length) { e.preventDefault(); pasteTarget.onFiles(files); }
 });
 
+// 檔案種類：有些系統不給 MIME type，再看副檔名
+const KINDS = {
+  'image/*': (f) => f.type.startsWith('image/'),
+  'audio/*': (f) => f.type.startsWith('audio/') || /\.(wav|mp3|ogg|m4a|aac|flac)$/i.test(f.name),
+  'video/*': (f) => f.type.startsWith('video/') || /\.(mp4|m4v|mov|webm)$/i.test(f.name),
+};
+
 export function dropzone({ accept = 'image/*', multiple = false, title, hint, onFiles }) {
-  const match = (f) => (accept === 'image/*' ? f.type.startsWith('image/') : accept === 'audio/*' ? f.type.startsWith('audio/') || /\.(wav|mp3|ogg|m4a|aac|flac)$/i.test(f.name) : true);
+  const match = (f) => accept.split(',').some((a) => KINDS[a]?.(f) ?? true);
   const input = h('input', { type: 'file', accept, multiple, class: 'hidden' });
   const el = h('div', { class: 'drop', tabindex: '0', role: 'button' },
     h('div', { class: 'big' }, title),

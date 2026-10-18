@@ -35,7 +35,7 @@
   font: 400 17px/30px var(--font-display); text-align: center; flex: none;
 }
 .gen-two { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-@media (max-width: 860px) { .gen-two { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .gen-two { grid-template-columns: minmax(0, 1fr); } }   /* 1fr 會被縮圖列撐寬 */
 
 /* 去背預覽 */
 .stage {
@@ -65,6 +65,14 @@
 }
 .spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line-2); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* 影片取格：左邊影片、右邊範圍 */
+.clip {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; margin-top: 14px;
+  padding: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+}
+.clip video { display: block; width: 100%; max-height: 340px; border-radius: 8px; background: var(--ink); }
+@media (max-width: 860px) { .clip { grid-template-columns: minmax(0, 1fr); } }
 
 /* 來源縮圖列 */
 .src-strip { display: flex; flex-wrap: wrap; gap: 10px; }

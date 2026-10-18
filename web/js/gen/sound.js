@@ -15,9 +15,9 @@ export function soundPanel() {
   const state = { raw: null, samples: null, name: '', trim: true, norm: true, id: SOUNDS[0].id };
 
   const drop = dropzone({
-    accept: 'audio/*',
+    accept: 'audio/*,video/*',
     title: '把音效檔拖進來',
-    hint: 'WAV、MP3、OGG、M4A 都可以。AI 音效網站下載的檔案直接丟。',
+    hint: 'WAV、MP3、OGG、M4A 都可以，MP4 影片會直接取出聲音。AI 音效網站下載的檔案直接丟。',
     onFiles: ([f]) => load(f),
   });
 
@@ -54,7 +54,7 @@ export function soundPanel() {
       derive();
     } catch {
       meta.textContent = '';
-      toast('這個音檔讀不出來，換成 WAV 或 MP3 試試', 'warn');
+      toast('這個檔案讀不出聲音（影片可能沒有聲音），換成 WAV 或 MP3 試試', 'warn');
     }
   }
 

@@ -1,10 +1,11 @@
-// 角色動作面板：放圖 → 去背切格 → 對齊預覽 → 存成某個動作。
+// 角色動作面板：放圖或影片 → 去背切格 → 對齊預覽 → 存成某個動作。
 import { h, why, callout, toast } from '../core.js';
 import { ANIMS } from '../data/vocab.js';
 import { removeEntry } from '../lib/fs.js';
 import { writePet, DIRS } from '../lib/master.js';
-import { toBlob } from '../lib/img.js';
+import { toBlob, makeCanvas, ctx2d } from '../lib/img.js';
 import { loadSource, processImage } from './process.js';
+import { isVideo, openVideo, grab, frameTimes, frameCount, findLoopEnd, contactSheet, MAX_FRAMES } from './video.js';
 import { sharedScale, drawPreview, renderMaster, CANVAS, BASELINE } from './normalize.js';
 import { dropzone, slider, toggle, vocabSelect, busyLayer, stepCard, saveFiles, pad3 } from './ui.js';
 import { folder, refresh, requireFolder, has } from './folder.js';
@@ -42,7 +43,7 @@ export function characterPanel() {
     for (const s of state.sources) {
       (s.result?.frames || []).forEach((f, i) => {
         const key = `${s.id}:${i}`;
-        if (!state.excluded.has(key)) out.push({ key, f });
+        if (!state.excluded.has(key)) out.push({ key, f, s });
       });
     }
     return out;
@@ -51,11 +52,28 @@ export function characterPanel() {
   // ── 步驟 1：放圖 ──
   const strip = h('div', { class: 'src-strip' });
   const drop = dropzone({
+    accept: 'image/*,video/*',
     multiple: true,
-    title: '把 AI 畫的圖拖進來',
-    hint: '也可以點一下選檔，或直接 Ctrl+V 貼上。可以一次放很多張，全部算同一個動作。',
+    title: '把 AI 畫的圖或影片拖進來',
+    hint: '圖片可以一次放很多張，全部算同一個動作；MP4 影片會自動切成一格一格。也可以點一下選檔，或 Ctrl+V 貼上圖片。',
     onFiles: addFiles,
   });
+
+  // ── 影片：取哪一段、每秒幾格 ──
+  const sec = (v) => `${v.toFixed(1)} 秒`;
+  const clipVideo = h('div', { class: 'clip-video' });
+  const clipStart = slider({ label: '從', min: 0, max: 1, step: 0.1, value: 0, format: sec, oninput: (v) => setClip({ start: v }) });
+  const clipEnd = slider({ label: '到', min: 0, max: 1, step: 0.1, value: 1, format: sec, oninput: (v) => setClip({ end: v }) });
+  const clipFps = slider({ label: '每秒取幾格', min: 1, max: 24, value: state.fps, format: (v) => `${v} 格`, oninput: (v) => setClip({ fps: v }) });
+  const clipCount = h('div', { class: 'small' });
+  const loopBtn = h('button', { class: 'btn', onclick: autoLoop, title: '找跟開頭最像的那一格當結尾，播完接回開頭不會跳' }, '🔁 自動找循環點');
+  const grabBtn = h('button', { class: 'btn btn-primary', onclick: () => extract(active()) }, '重新取格');
+  const clipBox = h('div', { class: 'clip hidden' },
+    clipVideo,
+    h('div', { class: 'stack' },
+      clipStart.el, clipEnd.el, clipFps.el, clipCount,
+      h('div', { class: 'row' }, loopBtn, grabBtn),
+      callout('tip', '影片要<b>純色背景、鏡頭不動</b>，角色全身都在畫面裡。每秒取幾格就是動畫的播放速度，動作快慢才會跟影片一樣。')));
 
   // ── 步驟 2：去背與切格 ──
   const stageCanvas = h('canvas', { class: 'stage-canvas' });
@@ -127,7 +145,7 @@ export function characterPanel() {
 
   const el = h('div', { class: 'gen-panel stack' },
     promptCard('character', () => state.animId),
-    stepCard(1, '放圖片', drop, strip),
+    stepCard(1, '放圖片或影片', drop, strip, clipBox),
     ...later,
     why([
       { art: artSolidBg(), title: '為什麼要純色背景？', text: '<p>工具靠「顏色」分辨哪裡是背景。背景只有一種顏色、而且角色身上沒有，就能分得乾乾淨淨。</p><p>叫 AI 畫「透明背景」反而危險：很多 AI 會把灰白格子直接畫進圖裡。</p>' },
@@ -140,8 +158,9 @@ export function characterPanel() {
 
   // ── 動作 ──
   async function addFiles(files) {
+    for (const file of files.filter(isVideo)) await addVideo(file);
     const added = [];
-    for (const file of files) {
+    for (const file of files.filter((f) => !isVideo(f))) {
       try {
         const src = await loadSource(file);
         const s = { id: ++seq, ...src, opts: defaultOpts(), result: null, ver: 0 };
@@ -160,9 +179,9 @@ export function characterPanel() {
 
   async function run(s) {
     const ver = ++s.ver;
-    if (s.id === state.active) { busy.show(s.data.width * s.data.height > 4e6 ? '大圖處理中，請稍等…' : '處理中…'); renderStage(); }
+    if (s.id === state.active) { busy.show(s.data && s.data.width * s.data.height > 4e6 ? '大圖處理中，請稍等…' : '處理中…'); renderStage(); }
     try {
-      const result = await processImage(s.data, s.opts);
+      const result = s.video ? await processClip(s, ver) : await processImage(s.data, s.opts);
       if (ver !== s.ver) return;      // 處理期間設定又改了，丟掉舊結果
       s.result = result;
     } catch (e) {
@@ -207,14 +226,21 @@ export function characterPanel() {
     state.active = id;
     const s = active();
     tol.value = s.opts.tolerance; glob.checked = s.opts.global; single.checked = s.opts.single;
+    // 影片每格本來就是一整格；角色一直在動，同一個位置點魔術棒會誤刪別格的身體
+    single.el.classList.toggle('hidden', !!s.video);
+    wandBtn.disabled = undoBtn.disabled = !!s.video;
+    if (s.video) setWand(false);
     renderSources();
     renderStage();
+    renderClip();
   }
   function removeSource(id) {
+    const gone = state.sources.find((s) => s.id === id);
+    if (gone?.video) URL.revokeObjectURL(gone.video.src);
     state.sources = state.sources.filter((s) => s.id !== id);
     for (const k of [...state.excluded]) if (k.startsWith(`${id}:`)) state.excluded.delete(k);
     if (state.active === id) state.active = state.sources[0]?.id ?? null;
-    if (state.active) selectSource(state.active); else renderSources();
+    if (state.active) selectSource(state.active); else { renderSources(); renderClip(); }
     showLater();
     renderStage();
     renderFrames();
@@ -227,7 +253,7 @@ export function characterPanel() {
     const r = stageCanvas.getBoundingClientRect();
     const x = ((e.clientX - r.left) * stageCanvas.width) / r.width;
     const y = ((e.clientY - r.top) * stageCanvas.height) / r.height;
-    if (state.wand) { setOpt({ wand: [...s.opts.wand, { x, y }] }); return; }
+    if (state.wand) { setOpt({ wand: [...s.opts.wand, { x, y }] }); return; }   // 影片來源時魔術棒是關的
     const i = s.result.frames.findIndex((f) => x >= f.src.x0 && x <= f.src.x1 && y >= f.src.y0 && y <= f.src.y1);
     if (i >= 0) toggleFrame(`${s.id}:${i}`);
   });
@@ -286,11 +312,11 @@ export function characterPanel() {
       // 先拿資料夾：瀏覽器只在「剛點完按鈕」的幾秒內肯開選資料夾視窗
       const root = await requireFolder();
       if (root && has('anim', a.id) && !confirm(`「${a.zh}」已經有圖了，要覆蓋嗎？舊的圖會全部刪掉。`)) return;
-      const scale = sharedScale(list.map((x) => x.f), state.size);
+      const { scale, at } = fit(list);
       const files = [];
       for (let i = 0; i < list.length; i++) {
         saveMsg.textContent = `準備第 ${i + 1} / ${list.length} 格…`;
-        const c = renderMaster(list[i].f.canvas, list[i].f, scale, off(list[i].key));
+        const c = renderMaster(list[i].f.canvas, list[i].f, scale, at(list[i]));
         files.push({ path: `${DIRS.character}/${a.zh}/${pad3(i + 1)}.png`, blob: await toBlob(c) });
       }
       if (root) await removeEntry(root, `${DIRS.character}/${a.zh}`);
@@ -309,6 +335,128 @@ export function characterPanel() {
     }
   }
 
+  // ── 影片 ──
+  async function addVideo(file) {
+    let video;
+    try {
+      video = await openVideo(file);
+    } catch {
+      toast(`「${file.name}」打不開，請轉成 MP4（H.264）再試`, 'warn');
+      return;
+    }
+    const rate = state.fps;
+    const s = { id: ++seq, name: file.name, video, raws: [], canvas: null, opts: defaultOpts(), result: null, ver: 0,
+      clip: { start: 0, end: Math.min(video.duration, MAX_FRAMES / rate), fps: rate } };
+    state.sources.push(s);
+    showLater();
+    selectSource(s.id);
+    if (anim().loop) await autoLoop();
+    else await extract(s);
+  }
+
+  function setClip(patch) {
+    const s = active();
+    if (!s?.video) return;
+    const c = Object.assign(s.clip, patch);
+    if (c.end - c.start < 1 / c.fps) {      // 至少一格
+      if ('start' in patch) c.start = Math.max(0, c.end - 1 / c.fps);
+      else c.end = Math.min(s.video.duration, c.start + 1 / c.fps);
+    }
+    if ('start' in patch) s.video.currentTime = c.start;   // 拉滑桿時影片跟著跳過去
+    if ('end' in patch) s.video.currentTime = c.end;
+    renderClip();
+  }
+
+  async function autoLoop() {
+    const s = active();
+    if (!s?.video) return;
+    clipCount.textContent = '找循環點中…';
+    const t = await findLoopEnd(s.video, s.clip.start, s.clip.fps);
+    if (t) s.clip.end = t;
+    else toast('影片太短，找不到循環點');
+    await extract(s);
+  }
+
+  // 依目前的範圍取格，再交給 run 去背
+  async function extract(s) {
+    if (!s?.video) return;
+    const { start, end, fps: rate } = s.clip;
+    grabBtn.disabled = loopBtn.disabled = true;
+    try {
+      s.raws = await grab(s.video, frameTimes(start, end, rate), {
+        onProgress: (i, n) => { if (s.id === state.active) clipCount.textContent = `取格中 ${i} / ${n}…`; },
+      });
+    } catch (e) {
+      toast(`取格失敗：${e.message}`, 'warn');
+      return;
+    } finally {
+      grabBtn.disabled = loopBtn.disabled = false;
+    }
+    s.canvas = makeCanvas(s.raws[0].width, s.raws[0].height);
+    ctx2d(s.canvas).putImageData(s.raws[0], 0, 0);
+    // 舊的挑格與微調對不上新的格了
+    for (const k of [...state.excluded]) if (k.startsWith(`${s.id}:`)) state.excluded.delete(k);
+    for (const k of [...state.offsets.keys()]) if (k.startsWith(`${s.id}:`)) state.offsets.delete(k);
+    state.fps = rate;
+    fps.value = rate;
+    renderClip();
+    await run(s);
+  }
+
+  // 影片：每格整張去背（不切），再排成總覽圖
+  async function processClip(s, ver) {
+    const t0 = performance.now();
+    const out = [];
+    for (const [i, data] of s.raws.entries()) {
+      if (ver !== s.ver) return null;
+      if (s.id === state.active) busy.show(`去背中 ${i + 1} / ${s.raws.length}…`);
+      out.push(await processImage(data, { ...s.opts, single: true, wand: [] }));
+    }
+    const { image, frames } = contactSheet(out, s.raws[0].width, s.raws[0].height);
+    return { image, frames, bg: out[0].bg, transparentBg: out[0].transparentBg, ms: Math.round(performance.now() - t0) };
+  }
+
+  // 縮放與位置：圖片每格各自置中、踩基線；影片整段取外框聯集，一起縮放、一起對齊，動作的位移才會留下來
+  function fit(list) {
+    const unions = new Map();
+    for (const { f, s } of list) {
+      if (!f.pos) continue;
+      const u = unions.get(s.id), p = f.pos;
+      unions.set(s.id, u
+        ? { x0: Math.min(u.x0, p.x0), y0: Math.min(u.y0, p.y0), x1: Math.max(u.x1, p.x1), y1: Math.max(u.y1, p.y1) }
+        : { ...p });
+    }
+    const boxes = [
+      ...list.filter((x) => !x.f.pos).map((x) => x.f),
+      ...[...unions.values()].map((u) => ({ core: { w: u.x1 - u.x0 + 1, h: u.y1 - u.y0 + 1 } })),
+    ];
+    const scale = sharedScale(boxes, state.size);
+    const at = ({ key, f, s }) => {
+      const o = off(key);
+      if (!f.pos) return o;
+      const u = unions.get(s.id);
+      return { dx: o.dx + ((f.pos.x0 + f.pos.x1) / 2 - (u.x0 + u.x1) / 2) * scale, dy: o.dy + (f.pos.y1 - u.y1) * scale };
+    };
+    return { scale, at };
+  }
+
+  function renderClip() {
+    const s = active();
+    clipBox.classList.toggle('hidden', !s?.video);
+    if (!s?.video) return;
+    if (s.video.parentNode !== clipVideo) clipVideo.replaceChildren(s.video);
+    const { start, end, fps: rate } = s.clip;
+    clipStart.input.max = clipEnd.input.max = s.video.duration.toFixed(1);
+    clipStart.value = start;
+    clipEnd.value = end;
+    clipFps.value = rate;
+    const n = frameCount(start, end, rate);
+    clipCount.replaceChildren(
+      `${sec(end - start)} × 每秒 ${rate} 格 ＝ `, h('b', {}, `${Math.min(n, MAX_FRAMES)} 格`),
+      n > MAX_FRAMES ? h('span', { class: 'warn-text' }, `（最多 ${MAX_FRAMES} 格，只取前 ${(MAX_FRAMES / rate).toFixed(1)} 秒）`) : '',
+      s.raws.length ? h('span', { class: 'muted' }, ` · 目前取了 ${s.raws.length} 格，改了範圍要按「重新取格」`) : '');
+  }
+
   // ── 畫面 ──
   function showLater() {
     for (const s of later) s.classList.toggle('hidden', !state.sources.length);
@@ -318,10 +466,13 @@ export function characterPanel() {
     strip.replaceChildren(...state.sources.map((s) => {
       const thumb = h('canvas', { width: 96, height: 72 });
       const g = thumb.getContext('2d');
-      const img = s.result?.image || s.canvas;
-      const k = Math.min(96 / img.width, 72 / img.height);
-      g.drawImage(img, (96 - img.width * k) / 2, (72 - img.height * k) / 2, img.width * k, img.height * k);
-      const n = s.result ? `${s.result.frames.length} 格` : '處理中…';
+      // 影片用第一格原圖（總覽圖縮這麼小看不出來）；還沒取完格時是 null
+      const img = s.video ? s.canvas : s.result?.image || s.canvas;
+      if (img) {
+        const k = Math.min(96 / img.width, 72 / img.height);
+        g.drawImage(img, (96 - img.width * k) / 2, (72 - img.height * k) / 2, img.width * k, img.height * k);
+      }
+      const n = s.result ? `${s.video ? '🎬 ' : ''}${s.result.frames.length} 格` : '處理中…';
       return h('div', { class: `src-item${s.id === state.active ? ' on' : ''}` },
         h('button', { class: 'src-pick checker', onclick: () => selectSource(s.id), title: s.name }, thumb),
         h('span', { class: 'small muted' }, n),
@@ -333,6 +484,7 @@ export function characterPanel() {
     const s = active();
     if (!s) { boxes.replaceChildren(); info.textContent = ''; return; }
     const img = s.result?.image || s.canvas;
+    if (!img) { boxes.replaceChildren(); info.textContent = '取格中…'; return; }
     stageCanvas.width = img.width;
     stageCanvas.height = img.height;
     stageCanvas.getContext('2d').drawImage(img, 0, 0);
@@ -354,6 +506,7 @@ export function characterPanel() {
         ? h('span', {}, '這張本來就是透明背景，直接切格')
         : h('span', {}, '背景色 ', h('span', { class: 'swatch', style: `background:${hex}` }), ` ${hex}`),
       ` · 找到 ${s.result.frames.length} 格 · ${s.result.ms} ms`,
+      s.video ? ' · 影片每格保留原本的位置，跳起來就是跳起來' : '',
       s.scaled ? ' · 原圖太大，已先縮到 3000 px' : '',
       s.result.frames.length ? '' : h('b', { class: 'warn-text' }, ' · 沒找到角色，試著把容許度調低'),
     );
@@ -402,14 +555,14 @@ export function characterPanel() {
     const list = frames();
     playBtn.textContent = state.playing ? '⏸ 暫停' : '▶ 播放';
     if (!list.length) { selLabel.textContent = ''; return; }
-    const scale = sharedScale(list.map((x) => x.f), state.size);
+    const { scale, at } = fit(list);
     const i = state.playing ? tick % list.length : Math.min(state.sel, list.length - 1);
     if (!state.playing && state.onion && list.length > 1) {
       const p = list[(i - 1 + list.length) % list.length];
-      drawPreview(g, p.f.canvas, p.f, scale, off(p.key), K, 0.3);
+      drawPreview(g, p.f.canvas, p.f, scale, at(p), K, 0.3);
     }
     const cur = list[i];
-    drawPreview(g, cur.f.canvas, cur.f, scale, off(cur.key), K);
+    drawPreview(g, cur.f.canvas, cur.f, scale, at(cur), K);
     selLabel.textContent = state.playing ? `第 ${i + 1} / ${list.length} 格` : `目前：第 ${i + 1} 格`;
   }
   function loop(t) {
